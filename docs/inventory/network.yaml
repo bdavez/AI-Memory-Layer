@@ -1,0 +1,36 @@
+machines:
+  machineA:
+    nic_count: 1
+    vlans: []
+    bridges: []
+  machineB:
+    nic_count: 1
+    vlans: []
+    bridges: []
+  machineC:
+    nic_count: 1
+    vlans: []
+    bridges: []
+  machineD:
+    nic_count: 1
+    vlans: []
+    bridges: []
+  machineE:
+    nic_count: 1
+    vlans: []
+    bridges: []
+  machineF:
+    nic_count: 1
+    vlans: []
+    bridges: []
+  machinePi4:
+    nic_count: 1
+    vlans: []
+    bridges: []
+  machineARM:
+    nic_count: 1
+    vlans: []
+    bridges: []
+
+vlans: []
+bridges: []

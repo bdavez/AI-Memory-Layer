@@ -1,0 +1,65 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Datacenter Control Plane</title>
+  <link rel="stylesheet" href="css/neon.css">
+</head>
+<body>
+  <div id="app">
+    <header class="cp-header">
+      <div class="cp-title">Datacenter Control Plane</div>
+      <div class="cp-subtitle">Canonical State · Drift · Actions</div>
+    </header>
+
+    <main class="cp-main">
+      <section class="cp-status-panel">
+        <h2>Status</h2>
+        <div id="status-indicator" class="status-indicator status-unknown">
+          <span class="status-label">Unknown</span>
+        </div>
+        <div id="status-details" class="status-details">
+          Waiting for status…
+        </div>
+        <div id="machine-table"></div>
+      </section>
+
+      <section class="cp-operator-panel">
+        <h2>Operator Actions</h2>
+        <div class="button-bar">
+          <button class="op-button" data-action="refresh-status">Refresh Status</button>
+          <button class="op-button" data-action="run-compile">Run Compile</button>
+          <button class="op-button" data-action="view-canonical">View Canonical State</button>
+          <button class="op-button" data-action="view-diff">View Drift Diff</button>
+        </div>
+      </section>
+    </main>
+
+    <section id="modal-container" class="modal-container hidden">
+      <div class="modal-backdrop"></div>
+      <div class="modal">
+        <div class="modal-header">
+          <span id="modal-title">Modal Title</span>
+          <button id="modal-close" class="modal-close">&times;</button>
+        </div>
+        <div id="modal-body" class="modal-body">
+          Modal content goes here.
+        </div>
+        <div class="modal-footer">
+          <button id="modal-download" class="modal-footer-button">Download JSON</button>
+          <button id="modal-close-footer" class="modal-footer-button">Close</button>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <script src="js/api.js"></script>
+  <script src="js/modal.js"></script>
+  <script src="js/status.js"></script>
+  <script src="js/buttons.js"></script>
+  <script src="js/jsonviewer.js"></script>
+  <script src="js/diff.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>

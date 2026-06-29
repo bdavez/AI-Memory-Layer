@@ -1,0 +1,129 @@
+machines:
+  required:
+    - A
+    - B
+    - C
+    - D
+    - E
+    - F
+    - Pi4
+    - ARM
+
+roles:
+  allowed:
+    - gpu_training
+    - gpu_inference
+    - cpu_compute
+    - xcp_host
+    - control_plane
+    - bridge
+    - spare
+    - backup
+    - arm_workload
+
+storage_rules:
+  machineA:
+    os_drive: "Lexar 1TB SATA"
+    nvme_required: 2
+  machineB:
+    os_drive: "SATA OS drive"
+    nvme_required: 2
+  machineC:
+    ext_sr:
+      - "Kingston SA400S3 447GB SATA"
+      - "Corsair Neutron XTI 223GB SATA (sda3)"
+  machineD:
+    flexible: true
+  machineE:
+    flexible: true
+  machineF:
+    empty: true
+
+spare_parts:
+  nvme:
+    wd_2tb: 2
+    adata_900pro_2tb: 1
+    xpg_s11pro_500gb: 1
+    bestoss_128gb: 0
+
+pending:
+  arm:
+    rock5b: 2
+    dragon_q6a: 3
+    heatsinks: true
+    bestoss_128gb: true
+  network:
+    x540_t2: 3
+
+vm_rules:
+  machineC:
+    required:
+      - vm-c1-prometheus
+      - vm-c2-grafana
+      - vm-c3-loki
+      - vm-c4-ci
+      - vm-c5-controlplane
+
+hostnames:
+  machineA: viktor
+  machineB: jinx
+  machineC: leona
+  machineD: astra
+  machineE: seraphine
+  machineF: forge
+  machinePi4: pico
+  machineARM: arm-cluster
+
+ips:
+  machineA: 192.168.1.10
+  machineB: 192.168.1.11
+  machineC: 192.168.1.12
+  machineD: 192.168.1.13
+  machineE: 192.168.1.14
+  machineF: 192.168.1.15
+  machinePi4: 192.168.1.16
+
+machine_rules:
+  machineA:        # gpu_training
+    cpu_cores: 6
+    ram_gb: 32
+    gpus: 1
+    nvme_count: 2
+
+  machineB:        # gpu_inference (dual GPU)
+    cpu_cores: 6
+    ram_gb: 32
+    gpus: 2
+    nvme_count: 2
+
+  machineC:        # xcp_host with GPU + EXT SR
+    cpu_cores: 6
+    ram_gb: 32
+    gpus: 1
+    nvme_count: 2
+    ext_sr: true
+
+  machineD:        # cpu_compute + Intel Arc
+    cpu_cores: 6
+    ram_gb: 32
+    gpus: 1
+
+  machineE:        # control_plane (exception, no AI)
+    cpu_cores: 6
+    ram_gb: 16
+    gpus: 0
+
+  machineF:        # empty placeholder
+    cpu_cores: 0
+    ram_gb: 0
+    gpus: 0
+
+  machinePi4:      # bridge / ARM helper
+    arm: true
+    cpu_cores: 0
+    ram_gb: 4
+
+  machineARM:      # arm_workload (pending)
+    arm: true
+    cpu_cores: 0
+    ram_gb: 0

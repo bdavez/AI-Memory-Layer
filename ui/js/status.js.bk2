@@ -1,0 +1,1007 @@
+import { apiGetStatus } from "./api.js";
+import { getStatusClass, getStatusLabel } from "../statusColors.js";
+
+// ---------------------------------------------------------
+// Reset UI
+// ---------------------------------------------------------
+export function setStatusUnknown() {
+  const indicator = document.getElementById("status-indicator");
+  const details = document.getElementById("status-details");
+  const table = document.getElementById("machine-table");
+  const dropdown = document.getElementById("machine-select");
+
+  if (indicator) {
+    indicator.className = "status-indicator status-unknown";
+    const label = indicator.querySelector(".status-label");
+    if (label) label.textContent = "Unknown";
+  }
+
+  if (details) details.textContent = "Waiting for status…";
+  if (table) table.innerHTML = "";
+  if (dropdown) dropdown.innerHTML = "";
+}
+
+// ---------------------------------------------------------
+// Machine filter state
+// ---------------------------------------------------------
+let machineFilterState = {
+  selectedMachine: "ALL",
+  showAliveOnly: false,
+  showGpuOnly: false,
+  showBusyOnly: false,
+  searchQuery: "",
+  focusMode: false
+};
+
+function getFilteredMachines(machines) {
+  return machines.filter(m => {
+    if (machineFilterState.selectedMachine !== "ALL" && m.name !== machineFilterState.selectedMachine) {
+      return false;
+    }
+    if (machineFilterState.showAliveOnly && !m.alive) {
+      return false;
+    }
+    if (machineFilterState.showGpuOnly && !m.gpu_name) {
+      return false;
+    }
+    if (machineFilterState.showBusyOnly && m.status !== "busy") {
+      return false;
+    }
+    if (machineFilterState.searchQuery) {
+      const q = machineFilterState.searchQuery.toLowerCase();
+      const name = (m.name || "").toLowerCase();
+      const role = (m.role || "").toLowerCase();
+      if (!name.includes(q) && !role.includes(q)) {
+        return false;
+      }
+    }
+    return true;
+  });
+}
+
+// ---------------------------------------------------------
+// Dropdown
+// ---------------------------------------------------------
+function populateMachineDropdown(machines) {
+  const dropdown = document.getElementById("machine-select");
+  if (!dropdown) return;
+
+  const previous = dropdown.value || "ALL";
+  dropdown.innerHTML = "";
+
+  const allOpt = document.createElement("option");
+  allOpt.value = "ALL";
+  allOpt.textContent = "All Machines";
+  dropdown.appendChild(allOpt);
+
+  machines.forEach(m => {
+    const opt = document.createElement("option");
+    opt.value = m.name;
+    opt.textContent = `${m.name} (${m.role})`;
+    dropdown.appendChild(opt);
+  });
+
+  if (previous && Array.from(dropdown.options).some(o => o.value === previous)) {
+    dropdown.value = previous;
+  } else {
+    dropdown.value = "ALL";
+  }
+  machineFilterState.selectedMachine = dropdown.value;
+}
+
+// ---------------------------------------------------------
+// Machine table
+// ---------------------------------------------------------
+function renderMachineTable(machines) {
+  const table = document.getElementById("machine-table");
+  if (!table) return;
+
+  if (!machines.length) {
+    table.innerHTML = "<div class='empty'>No machines reporting</div>";
+    return;
+  }
+
+  const rows = machines.map(m => {
+    const alive = m.alive ? "alive" : "dead";
+    return `
+      <tr class="machine-row ${alive}">
+        <td>${m.name}</td>
+        <td>${m.role}</td>
+        <td>${m.heartbeat}</td>
+        <td class="hb-${alive}">${alive.toUpperCase()}</td>
+      </tr>
+    `;
+  }).join("");
+
+  table.innerHTML = `
+    <table class="machine-table">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Role</th>
+          <th>Last Heartbeat</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>${rows}</tbody>
+    </table>
+  `;
+}
+
+// ---------------------------------------------------------
+// Apply status
+// ---------------------------------------------------------
+function setStatusFromData(data) {
+  const indicator = document.getElementById("status-indicator");
+  const details = document.getElementById("status-details");
+
+  if (!data) {
+    setStatusUnknown();
+    return;
+  }
+
+  if (indicator) {
+    const status = data.overall_status || "unknown";
+    indicator.className = `status-indicator status-${status.toLowerCase()}`;
+    const label = indicator.querySelector(".status-label");
+    if (label) label.textContent = status;
+  }
+
+  if (details) details.textContent = data.message || "Status updated.";
+
+  const machines = data.machines || [];
+  populateMachineDropdown(machines);
+  initializeMachineFilters(data);
+  renderMachineTable(machines);
+}
+
+
+// ---------------------------------------------------------
+// Machine filter initialization
+// ---------------------------------------------------------
+function initializeMachineFilters(statusData) {
+  if (window.__machineFiltersInitialized) return;
+  window.__machineFiltersInitialized = true;
+
+  const dropdown = document.getElementById("machine-select");
+  const searchInput = document.getElementById("machine-search");
+  const aliveToggle = document.getElementById("filter-alive");
+  const gpuToggle = document.getElementById("filter-gpu");
+  const busyToggle = document.getElementById("filter-busy");
+  const focusToggle = document.getElementById("filter-focus");
+
+  function reRender() {
+    const data = window.__lastStatusData || statusData;
+    renderHeartbeatPane(data);
+  }
+
+  if (dropdown) {
+    dropdown.addEventListener("change", () => {
+      machineFilterState.selectedMachine = dropdown.value;
+      reRender();
+    });
+  }
+
+  if (searchInput) {
+    searchInput.addEventListener("input", () => {
+      machineFilterState.searchQuery = searchInput.value.trim();
+      reRender();
+    });
+  }
+
+  if (aliveToggle) {
+    aliveToggle.addEventListener("change", () => {
+      machineFilterState.showAliveOnly = aliveToggle.checked;
+      reRender();
+    });
+  }
+  if (gpuToggle) {
+    gpuToggle.addEventListener("change", () => {
+      machineFilterState.showGpuOnly = gpuToggle.checked;
+      reRender();
+    });
+  }
+  if (busyToggle) {
+    busyToggle.addEventListener("change", () => {
+      machineFilterState.showBusyOnly = busyToggle.checked;
+      reRender();
+    });
+  }
+  if (focusToggle) {
+    focusToggle.addEventListener("change", () => {
+      machineFilterState.focusMode = focusToggle.checked;
+      reRender();
+    });
+  }
+}
+
+// ---------------------------------------------------------
+// Sparkline helpers
+// ---------------------------------------------------------
+// Sparkline history buffers
+const sparkHistoryCluster = {
+  cpu: [],
+  ram: []
+};
+
+// Per-node spark history: { name: { cpu: [], ram: [] } }
+const sparkHistoryNodes = {};
+
+// Simple rolling average smoothing
+function smoothSeries(values, windowSize = 3) {
+  if (values.length <= 2 || windowSize <= 1) return values.slice();
+  const out = [];
+  for (let i = 0; i < values.length; i++) {
+    const start = Math.max(0, i - windowSize + 1);
+    const slice = values.slice(start, i + 1);
+    const avg = slice.reduce((a, b) => a + b, 0) / slice.length;
+    out.push(avg);
+  }
+  return out;
+}
+
+// Color-coded segmented sparkline
+function drawSparklineSegmented(canvasId, values, thresholds) {
+  const canvas = document.getElementById(canvasId);
+  if (!canvas) return;
+  const ctx = canvas.getContext("2d");
+  const w = canvas.width;
+  const h = canvas.height;
+
+  ctx.clearRect(0, 0, w, h);
+  if (!values || values.length < 2) return;
+
+  const max = 100;
+  const min = 0;
+
+  const segments = [];
+  for (let i = 0; i < values.length - 1; i++) {
+    const v1 = values[i];
+    const v2 = values[i + 1];
+    const x1 = (i / (values.length - 1)) * w;
+    const x2 = ((i + 1) / (values.length - 1)) * w;
+    const y1 = h - ((v1 - min) / (max - min)) * h;
+    const y2 = h - ((v2 - min) / (max - min)) * h;
+
+    let color = thresholds.okColor;
+    if (v1 >= thresholds.crit) color = thresholds.critColor;
+    else if (v1 >= thresholds.warn) color = thresholds.warnColor;
+
+    segments.push({ x1, y1, x2, y2, color });
+  }
+
+  ctx.lineWidth = 2;
+  segments.forEach(seg => {
+    ctx.strokeStyle = seg.color;
+    ctx.beginPath();
+    ctx.moveTo(seg.x1, seg.y1);
+    ctx.lineTo(seg.x2, seg.y2);
+    ctx.stroke();
+  });
+}
+
+// ---------------------------------------------------------
+// Refresh loop
+// ---------------------------------------------------------
+export async function refreshStatus() {
+  try {
+    const data = await apiGetStatus();
+
+    // Existing status UI
+    setStatusFromData(data);
+
+    const machines = data.machines || [];
+
+    // New panes
+    renderHeartbeatPane(data);
+    renderTaskActivityPane(data);
+
+    // Update cluster spark history
+    const cpuValues = machines.map(m => m.cpu).filter(v => v != null);
+    const ramValues = machines.map(m => m.ram).filter(v => v != null);
+
+    if (cpuValues.length) {
+      const avgCpu = Math.round(cpuValues.reduce((a, b) => a + b, 0) / cpuValues.length);
+      sparkHistoryCluster.cpu.push(avgCpu);
+      if (sparkHistoryCluster.cpu.length > 60) sparkHistoryCluster.cpu.shift();
+    }
+
+    if (ramValues.length) {
+      const avgRam = Math.round(ramValues.reduce((a, b) => a + b, 0) / ramValues.length);
+      sparkHistoryCluster.ram.push(avgRam);
+      if (sparkHistoryCluster.ram.length > 60) sparkHistoryCluster.ram.shift();
+    }
+
+    // Update per-node spark history
+    machines.forEach(m => {
+      if (!sparkHistoryNodes[m.name]) {
+        sparkHistoryNodes[m.name] = {
+          cpu: [],
+          ram: [],
+          gpu: [],
+          gpu_mem: [],
+          net_rx: [],
+          net_tx: []
+        };
+      }
+
+      if (m.cpu != null) {
+        sparkHistoryNodes[m.name].cpu.push(m.cpu);
+        if (sparkHistoryNodes[m.name].cpu.length > 60) sparkHistoryNodes[m.name].cpu.shift();
+      }
+
+      if (m.ram != null) {
+        sparkHistoryNodes[m.name].ram.push(m.ram);
+        if (sparkHistoryNodes[m.name].ram.length > 60) sparkHistoryNodes[m.name].ram.shift();
+      }
+
+      if (m.gpu_util != null) {
+        sparkHistoryNodes[m.name].gpu.push(m.gpu_util);
+        if (sparkHistoryNodes[m.name].gpu.length > 60) sparkHistoryNodes[m.name].gpu.shift();
+      }
+
+      if (m.gpu_mem != null) {
+        sparkHistoryNodes[m.name].gpu_mem.push(m.gpu_mem);
+        if (sparkHistoryNodes[m.name].gpu_mem.length > 60) sparkHistoryNodes[m.name].gpu_mem.shift();
+      }
+
+      if (m.net_rx_kbps != null) {
+        sparkHistoryNodes[m.name].net_rx.push(m.net_rx_kbps);
+        if (sparkHistoryNodes[m.name].net_rx.length > 60) sparkHistoryNodes[m.name].net_rx.shift();
+      }
+
+      if (m.net_tx_kbps != null) {
+        sparkHistoryNodes[m.name].net_tx.push(m.net_tx_kbps);
+        if (sparkHistoryNodes[m.name].net_tx.length > 60) sparkHistoryNodes[m.name].net_tx.shift();
+      }
+    });
+
+    // Render cluster-level panes
+    renderClusterSummary(data);
+    renderClusterTrendPane(data);
+
+    // Draw cluster summary sparklines
+    drawSparklineSegmented("cluster-cpu-spark", smoothSeries(sparkHistoryCluster.cpu, 2), {
+      ok: 0,
+      warn: 70,
+      crit: 90,
+      okColor: "#00e676",
+      warnColor: "#ffca28",
+      critColor: "#ff5252"
+    });
+    drawSparklineSegmented("cluster-ram-spark", smoothSeries(sparkHistoryCluster.ram, 2), {
+      ok: 0,
+      warn: 70,
+      crit: 90,
+      okColor: "#40c4ff",
+      warnColor: "#ffca28",
+      critColor: "#ff5252"
+    });
+
+    // Draw per-node sparklines
+    machines.forEach(m => {
+      const hist = sparkHistoryNodes[m.name];
+      if (!hist) return;
+      const safeName = m.name.replace(/[^a-zA-Z0-9_-]/g, "_");
+
+      // CPU
+      drawSparklineSegmented(`node-cpu-spark-${safeName}`, smoothSeries(hist.cpu, 2), {
+        ok: 0,
+        warn: 70,
+        crit: 90,
+        okColor: "#00e676",
+        warnColor: "#ffca28",
+        critColor: "#ff5252"
+      });
+
+      // RAM
+      drawSparklineSegmented(`node-ram-spark-${safeName}`, smoothSeries(hist.ram, 2), {
+        ok: 0,
+        warn: 70,
+        crit: 90,
+        okColor: "#40c4ff",
+        warnColor: "#ffca28",
+        critColor: "#ff5252"
+      });
+
+      // GPU util
+      if (hist.gpu && hist.gpu.length > 1) {
+        drawSparklineSegmented(`node-gpu-spark-${safeName}`, smoothSeries(hist.gpu, 2), {
+          ok: 0,
+          warn: 70,
+          crit: 90,
+          okColor: "#00bcd4",
+          warnColor: "#ffca28",
+          critColor: "#ff5252"
+        });
+      }
+
+      // GPU memory
+      if (hist.gpu_mem && hist.gpu_mem.length > 1) {
+        drawSparklineSegmented(`node-gpu-mem-spark-${safeName}`, smoothSeries(hist.gpu_mem, 2), {
+          ok: 0,
+          warn: 70,
+          crit: 90,
+          okColor: "#7e57c2",
+          warnColor: "#ffca28",
+          critColor: "#ff5252"
+        });
+      }
+
+      // Network RX
+      if (hist.net_rx && hist.net_rx.length > 1) {
+        drawSparklineSegmented(`node-net-rx-spark-${safeName}`, smoothSeries(hist.net_rx, 2), {
+          ok: 0,
+          warn: 5000,
+          crit: 20000,
+          okColor: "#4caf50",
+          warnColor: "#ffca28",
+          critColor: "#ff5252"
+        });
+      }
+
+      // Network TX
+      if (hist.net_tx && hist.net_tx.length > 1) {
+        drawSparklineSegmented(`node-net-tx-spark-${safeName}`, smoothSeries(hist.net_tx, 2), {
+          ok: 0,
+          warn: 5000,
+          crit: 20000,
+          okColor: "#8bc34a",
+          warnColor: "#ffca28",
+          critColor: "#ff5252"
+        });
+      }
+    });
+
+  } catch (err) {
+    console.error("Failed to refresh status:", err);
+    setStatusUnknown();
+  }
+}
+
+// ========================================================
+// Heartbeat Pane Renderer
+// ========================================================
+function groupByRole(machines) {
+  const groups = {};
+  machines.forEach(m => {
+    const role = m.role || "unknown";
+    if (!groups[role]) groups[role] = [];
+    groups[role].push(m);
+  });
+  return groups;
+}
+
+export function renderHeartbeatPane(statusData) {
+  const allMachines = statusData.machines || [];
+  const machines = machineFilterState.focusMode
+    ? getFilteredMachines(allMachines)
+    : getFilteredMachines(allMachines);
+  const groups = groupByRole(machines);
+
+  const container = document.getElementById("heartbeat-pane");
+  if (!container) return;
+
+  container.innerHTML = `
+    <div class="status-section">
+      <div class="status-section-header">Cluster Heartbeat</div>
+      <div class="status-section-body">
+        ${
+          Object.keys(groups).length === 0
+            ? `<div class="hb-empty">No machines reporting heartbeat.</div>`
+            : Object.entries(groups).map(([role, nodes]) => `
+                <div class="hb-group">
+                  <div class="hb-group-title">${role}</div>
+                  <div class="hb-group-grid">
+                    ${nodes.map(node => renderHeartbeatCard(node)).join("")}
+                  </div>
+                </div>
+              `).join("")
+        }
+      </div>
+    </div>
+  `;
+}
+
+function renderHeartbeatCard(node) {
+  const statusClass = getStatusClass(node.status);
+  const statusLabel = getStatusLabel(node.status);
+
+  const lastSeen = node.last_seen
+    ? new Date(node.last_seen * 1000).toLocaleTimeString()
+    : "—";
+
+  const heartbeat = node.heartbeat || "—";
+  const latency = node.latency_ms != null ? `${node.latency_ms} ms` : "—";
+
+  const safeName = node.name.replace(/[^a-zA-Z0-9_-]/g, "_");
+
+  // Network usage text helpers
+  const linkMbps = node.link_speed_mbps;
+  const rxKbps = node.net_rx_kbps;
+  const txKbps = node.net_tx_kbps;
+
+  const rxMbps = rxKbps != null ? (rxKbps / 1000).toFixed(1) : null;
+  const txMbps = txKbps != null ? (txKbps / 1000).toFixed(1) : null;
+
+  const rxPct = (rxKbps != null && linkMbps)
+    ? Math.round((rxKbps / (linkMbps * 1000)) * 100)
+    : null;
+
+  const txPct = (txKbps != null && linkMbps)
+    ? Math.round((txKbps / (linkMbps * 1000)) * 100)
+    : null;
+
+  const linkText = linkMbps ? `${linkMbps} mbps` : "—";
+
+  // ---- alerting thresholds ----
+  const cpuAlert = node.cpu != null && node.cpu >= 90;
+  const ramAlert = node.ram != null && node.ram >= 90;
+  const gpuAlert = node.gpu_util != null && node.gpu_util >= 90;
+  const netAlert =
+    (rxPct != null && rxPct >= 80) ||
+    (txPct != null && txPct >= 80);
+  const latencyAlert = node.latency_ms != null && node.latency_ms >= 200;
+
+  const cardAlert =
+    cpuAlert || ramAlert || gpuAlert || netAlert || latencyAlert;
+
+  const cardAlertClass = cardAlert ? " hb-card-alert" : "";
+
+  // thermal/io/power presence checks (safe if missing)
+  const hasGpuTemp = node.gpu_temp != null;
+  const hasCpuTemp = node.cpu_temp != null; // future field
+  const hasThermal = hasGpuTemp || hasCpuTemp;
+
+  const hasIo = node.disk_read_kbps != null ||
+                node.disk_write_kbps != null ||
+                node.disk_busy_pct != null; // future fields
+
+  const hasPower = node.cpu_watts != null ||
+                   node.gpu_watts != null; // future fields
+
+  return `
+    <div class="hb-card${cardAlertClass}">
+      <div class="hb-card-header">
+        <span class="hb-name">${node.name}</span>
+        <span class="${statusClass}">${statusLabel}</span>
+      </div>
+
+      <div class="hb-card-meta">
+        <span class="hb-meta-item">Last HB: ${heartbeat}</span>
+        <span class="hb-meta-item">Seen: ${lastSeen}</span>
+        <span class="hb-meta-item${latencyAlert ? " hb-meta-alert" : ""}">Latency: ${latency}</span>
+        <span class="hb-meta-item">Role: ${node.role || "unknown"}</span>
+      </div>
+
+      <div class="hb-card-resources">
+
+        <!-- System -->
+        <div class="hb-subsection-title">system</div>
+        ${renderResourceBar(node.cpu, "cpu", "⚙️", cpuAlert)}
+        ${renderResourceBar(node.ram, "ram", "🧠", ramAlert)}
+
+        <!-- GPU -->
+        <div class="hb-subsection-title">gpu</div>
+        ${
+          node.gpu_mem_used != null && node.gpu_mem_total != null
+            ? renderResourceBar(
+               node.gpu_mem,  // percent
+                 "gpu-mem",
+                 `💾 ${(node.gpu_mem_used/1024).toFixed(1)} / ${(node.gpu_mem_total/1024).toFixed(1)} GB`
+              )
+             : ""
+         }
+        <!-- Network -->
+        <div class="hb-subsection-title">network</div>
+        ${
+          node.net_rx_kbps != null && node.link_speed_mbps != null
+            ? renderResourceBar(
+                Math.round((node.net_rx_kbps / (node.link_speed_mbps * 1000)) * 100),
+                "net-rx",
+                "⬇️",
+                netAlert
+              )
+            : ""
+        }
+        ${
+          node.net_tx_kbps != null && node.link_speed_mbps != null
+            ? renderResourceBar(
+                Math.round((node.net_tx_kbps / (node.link_speed_mbps * 1000)) * 100),
+                "net-tx",
+                "⬆️",
+                netAlert
+              )
+            : ""
+        }
+
+        ${
+          (rxMbps != null || txMbps != null || linkMbps != null)
+            ? `
+              <div class="hb-network-text">
+                <div>rx: ${rxMbps != null ? `${rxMbps} mbps${rxPct != null ? ` (${rxPct}% )` : ""}` : "—"}</div>
+                <div>tx: ${txMbps != null ? `${txMbps} mbps${txPct != null ? ` (${txPct}% )` : ""}` : "—"}</div>
+                <div>link: ${linkText}</div>
+              </div>
+            `
+            : ""
+        }
+
+        ${
+          hasThermal
+            ? `
+              <div class="hb-subsection-title">thermal</div>
+              <div class="hb-thermal-grid">
+                ${
+                  hasCpuTemp
+                    ? `<div class="hb-thermal-item">
+                         <span class="hb-thermal-label">cpu temp</span>
+                         <span class="hb-thermal-value">${node.cpu_temp}°c</span>
+                       </div>`
+                    : ""
+                }
+                ${
+                  hasGpuTemp
+                    ? `<div class="hb-thermal-item">
+                         <span class="hb-thermal-label">gpu temp</span>
+                         <span class="hb-thermal-value">${node.gpu_temp}°c</span>
+                       </div>`
+                    : ""
+                }
+              </div>
+            `
+            : ""
+        }
+
+        ${
+          hasIo
+            ? `
+              <div class="hb-subsection-title">io</div>
+              <div class="hb-io-grid">
+                ${
+                  node.disk_read_kbps != null
+                    ? `<div class="hb-io-item">
+                         <span class="hb-io-label">read</span>
+                         <span class="hb-io-value">${(node.disk_read_kbps / 1000).toFixed(1)} mb/s</span>
+                       </div>`
+                    : ""
+                }
+                ${
+                  node.disk_write_kbps != null
+                    ? `<div class="hb-io-item">
+                         <span class="hb-io-label">write</span>
+                         <span class="hb-io-value">${(node.disk_write_kbps / 1000).toFixed(1)} mb/s</span>
+                       </div>`
+                    : ""
+                }
+                ${
+                  node.disk_busy_pct != null
+                    ? `<div class="hb-io-item">
+                         <span class="hb-io-label">busy</span>
+                         <span class="hb-io-value">${node.disk_busy_pct}%</span>
+                       </div>`
+                    : ""
+                }
+              </div>
+            `
+            : ""
+        }
+
+        ${
+          hasPower
+            ? `
+              <div class="hb-subsection-title">power</div>
+              <div class="hb-power-grid">
+                ${
+                  node.cpu_watts != null
+                    ? `<div class="hb-power-item">
+                         <span class="hb-power-label">cpu</span>
+                         <span class="hb-power-value">${node.cpu_watts} w</span>
+                       </div>`
+                    : ""
+                }
+                ${
+                  node.gpu_watts != null
+                    ? `<div class="hb-power-item">
+                         <span class="hb-power-label">gpu</span>
+                         <span class="hb-power-value">${node.gpu_watts} w</span>
+                       </div>`
+                    : ""
+                }
+              </div>
+            `
+            : ""
+        }
+
+      </div>
+
+      <div class="hb-card-reason">
+        ${node.status_reason || ""}
+      </div>
+
+      <div class="hb-subsection-title">signals</div>
+      <div class="hb-signals-grid">
+
+        <div class="sparkline-row">
+          <div class="sparkline-label">cpu</div>
+          <canvas class="node-cpu-spark hb-spark-hover"
+                  id="node-cpu-spark-${safeName}"
+                  data-node="${safeName}"
+                  data-metric="cpu"
+                  width="140" height="26"></canvas>
+        </div>
+
+        <div class="sparkline-row">
+          <div class="sparkline-label">ram</div>
+          <canvas class="node-ram-spark hb-spark-hover"
+                  id="node-ram-spark-${safeName}"
+                  data-node="${safeName}"
+                  data-metric="ram"
+                  width="140" height="26"></canvas>
+        </div>
+
+        <div class="sparkline-row">
+          <div class="sparkline-label">gpu</div>
+          <canvas class="node-gpu-spark hb-spark-hover"
+                  id="node-gpu-spark-${safeName}"
+                  data-node="${safeName}"
+                  data-metric="gpu"
+                  width="140" height="26"></canvas>
+        </div>
+
+        <div class="sparkline-row">
+          <div class="sparkline-label">gpu mem</div>
+          <canvas class="node-gpu-mem-spark hb-spark-hover"
+                  id="node-gpu-mem-spark-${safeName}"
+                  data-node="${safeName}"
+                  data-metric="gpu-mem"
+                  width="140" height="26"></canvas>
+        </div>
+
+        <div class="sparkline-row">
+          <div class="sparkline-label">net rx</div>
+          <canvas class="node-net-rx-spark hb-spark-hover"
+                  id="node-net-rx-spark-${safeName}"
+                  data-node="${safeName}"
+                  data-metric="net-rx"
+                  width="140" height="26"></canvas>
+        </div>
+
+        <div class="sparkline-row">
+          <div class="sparkline-label">net tx</div>
+          <canvas class="node-net-tx-spark hb-spark-hover"
+                  id="node-net-tx-spark-${safeName}"
+                  data-node="${safeName}"
+                  data-metric="net-tx"
+                  width="140" height="26"></canvas>
+        </div>
+
+      </div>
+    </div>
+  `;
+}
+// ========================================================
+// Task Activity Pane Renderer
+// ========================================================
+export function renderTaskActivityPane(statusData) {
+  const busyNodes = (statusData.machines || []).filter(m => m.status === "busy");
+
+  const container = document.getElementById("task-activity-pane");
+  if (!container) return;
+
+  container.innerHTML = `
+    <div class="task-section">
+      <div class="task-section-header">Task Activity</div>
+      <div class="task-section-body">
+        ${
+          busyNodes.length === 0
+            ? `<div class="hb-empty">No nodes are currently busy.</div>`
+            : busyNodes.map(node => `
+                <div class="task-card">
+                  <div class="task-card-header">
+                    <span class="task-name">${node.name}</span>
+                    <span class="status-pill status-busy">Busy</span>
+                  </div>
+                  <div class="task-meta">
+                    <span class="task-meta-item">Role: ${node.role}</span>
+                    <span class="task-meta-item">Last HB: ${node.heartbeat}</span>
+                    <span class="task-meta-item">Latency: ${node.latency_ms ?? "—"} ms</span>
+                    ${
+                      node.task
+                        ? `<span class="task-meta-item">Task: ${node.task}</span>`
+                        : ""
+                    }
+                  </div>
+                </div>
+              `).join("")
+        }
+      </div>
+    </div>
+  `;
+}
+
+// ========================================================
+// Resource Bar Renderer
+// ========================================================
+function renderResourceBar(value, type, icon = "") {
+  if (value == null) return "";
+
+  // Force numeric (fixes GPU RAM bar)
+  value = Number(value);
+
+  let cls = "";
+  if (type.startsWith("net")) {
+    if (value >= 60) cls = "crit";
+    else if (value >= 20) cls = "warn";
+  } else {
+    if (value >= 90) cls = "crit";
+    else if (value >= 70) cls = "warn";
+  }
+
+  return `
+    <div class="resource-label">${icon} ${type.toUpperCase()}: ${value}%</div>
+    <div class="resource-bar">
+      <div class="resource-bar-fill resource-${type} ${cls}" style="width: ${value}%"></div>
+    </div>
+  `;
+}
+// ========================================================
+// Cluster Summary Pane Renderer
+// ========================================================
+export function renderClusterSummary(statusData) {
+  const machines = statusData.machines || [];
+
+  const alive = machines.filter(m => m.alive).length;
+  const dead = machines.filter(m => !m.alive).length;
+  const busy = machines.filter(m => m.status === "busy").length;
+
+  const cpuValues = machines.map(m => m.cpu).filter(v => v != null);
+  const ramValues = machines.map(m => m.ram).filter(v => v != null);
+
+  const avgCpu = cpuValues.length
+    ? Math.round(cpuValues.reduce((a, b) => a + b, 0) / cpuValues.length)
+    : "—";
+
+  const avgRam = ramValues.length
+    ? Math.round(ramValues.reduce((a, b) => a + b, 0) / ramValues.length)
+    : "—";
+
+  let status = "OK";
+  let statusClass = "cluster-ok";
+
+  if (dead > 0) {
+    status = "CRITICAL";
+    statusClass = "cluster-dead";
+  } else if (busy > 0) {
+    status = "BUSY";
+    statusClass = "cluster-busy";
+  } else if (machines.some(m => m.latency_ms > 200)) {
+    status = "WARNING";
+    statusClass = "cluster-warn";
+  }
+
+  const container = document.getElementById("cluster-summary-pane");
+  if (!container) return;
+
+  container.innerHTML = `
+    <div class="cluster-summary">
+      <div class="cluster-summary-header">Cluster Summary</div>
+      <div class="cluster-summary-body">
+        <div>Nodes: ${alive} online / ${dead} dead</div>
+
+        <div>CPU Avg: ${avgCpu}%</div>
+        <canvas id="cluster-cpu-spark" width="200" height="32"></canvas>
+
+        <div>RAM Avg: ${avgRam}%</div>
+        <canvas id="cluster-ram-spark" width="200" height="32"></canvas>
+
+        <div class="cluster-status-pill ${statusClass}">${status}</div>
+      </div>
+    </div>
+  `;
+}
+
+// ========================================================
+// Cluster Trend Pane Renderer
+// ========================================================
+export function renderClusterTrendPane(statusData) {
+  const container = document.getElementById("cluster-trend-pane");
+  if (!container) return;
+
+  const cpuSeries = smoothSeries(sparkHistoryCluster.cpu, 3);
+  const ramSeries = smoothSeries(sparkHistoryCluster.ram, 3);
+
+  container.innerHTML = `
+    <div class="cluster-trend">
+      <div class="cluster-trend-header">Cluster Load Trend</div>
+      <div class="cluster-trend-body">
+        <div>
+          <div class="cluster-trend-row-label">CPU (last 5 minutes)</div>
+          <canvas id="cluster-trend-cpu" width="260" height="40"></canvas>
+        </div>
+        <div>
+          <div class="cluster-trend-row-label">RAM (last 5 minutes)</div>
+          <canvas id="cluster-trend-ram" width="260" height="40"></canvas>
+        </div>
+      </div>
+    </div>
+  `;
+
+  drawSparklineSegmented("cluster-trend-cpu", cpuSeries, {
+    ok: 0,
+    warn: 70,
+    crit: 90,
+    okColor: "#00e676",
+    warnColor: "#ffca28",
+    critColor: "#ff5252"
+  });
+
+  drawSparklineSegmented("cluster-trend-ram", ramSeries, {
+    ok: 0,
+    warn: 70,
+    crit: 90,
+    okColor: "#40c4ff",
+    warnColor: "#ffca28",
+    critColor: "#ff5252"
+  });
+}
+
+window.sparkHistoryNodes = sparkHistoryNodes;
+window.sparkHistoryCluster = sparkHistoryCluster;
+
+
+// Hover‑expand for node sparklines
+function initSparklineHover() {
+  const overlayId = "hb-sparkline-overlay";
+  let overlay = document.getElementById(overlayId);
+  if (!overlay) {
+    overlay = document.createElement("div");
+    overlay.id = overlayId;
+    overlay.className = "hb-sparkline-overlay";
+    overlay.innerHTML = '<canvas id="hb-sparkline-overlay-canvas" width="320" height="80"></canvas>';
+    document.body.appendChild(overlay);
+  }
+
+  const overlayCanvas = document.getElementById("hb-sparkline-overlay-canvas");
+  const ctx = overlayCanvas.getContext("2d");
+
+  function hideOverlay() {
+    overlay.classList.remove("visible");
+  }
+
+  function showOverlayForCanvas(canvas) {
+    const rect = canvas.getBoundingClientRect();
+    overlay.style.top = (rect.top - 90) + "px";
+    overlay.style.left = rect.left + "px";
+    overlay.classList.add("visible");
+
+    // simple copy: draw the small sparkline into the larger canvas
+    try {
+      const smallCtx = canvas.getContext("2d");
+      const imgData = smallCtx.getImageData(0, 0, canvas.width, canvas.height);
+      ctx.clearRect(0, 0, overlayCanvas.width, overlayCanvas.height);
+      ctx.drawImage(canvas, 0, 0, overlayCanvas.width, overlayCanvas.height);
+    } catch (e) {
+      // fail silently
+    }
+  }
+
+  document.addEventListener("mouseover", (ev) => {
+    const target = ev.target;
+    if (target && target.classList && target.classList.contains("hb-spark-hover")) {
+      showOverlayForCanvas(target);
+    }
+  });
+
+  document.addEventListener("mouseout", (ev) => {
+    const target = ev.target;
+    if (target && target.classList && target.classList.contains("hb-spark-hover")) {
+      hideOverlay();
+    }
+  });
+}
+
+// ensure hover init runs after DOM + initial render
+document.addEventListener("DOMContentLoaded", () => {
+  initSparklineHover();
+});

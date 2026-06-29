@@ -1,0 +1,293 @@
+body {
+  margin: 0;
+  padding: 0;
+  background: #050711;
+  color: #e5e9ff;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+#app {
+  max-width: 1100px;
+  margin: 24px auto;
+  padding: 16px 20px;
+  border-radius: 8px;
+  background: radial-gradient(circle at top left, #151a33, #050711 60%);
+  box-shadow: 0 0 24px rgba(0, 255, 255, 0.15);
+  border: 1px solid rgba(0, 255, 255, 0.25);
+}
+
+.cp-header {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 16px;
+}
+
+.cp-title {
+  font-size: 1.4rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #7df9ff;
+}
+
+.cp-subtitle {
+  font-size: 0.85rem;
+  color: #9fa8ff;
+}
+
+.cp-main {
+  display: grid;
+  grid-template-columns: 1.1fr 1.2fr;
+  gap: 16px;
+}
+
+.cp-status-panel,
+.cp-operator-panel {
+  padding: 12px 14px;
+  border-radius: 6px;
+  background: rgba(5, 10, 30, 0.9);
+  border: 1px solid rgba(0, 255, 255, 0.2);
+  box-shadow: 0 0 12px rgba(0, 255, 255, 0.08);
+}
+
+.cp-status-panel h2,
+.cp-operator-panel h2 {
+  margin: 0 0 8px 0;
+  font-size: 0.95rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: #9fa8ff;
+}
+
+/* Status indicator */
+
+.status-indicator {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  margin-bottom: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.status-label {
+  margin-left: 6px;
+}
+
+.status-unknown {
+  background: rgba(120, 120, 120, 0.15);
+  border-color: rgba(180, 180, 180, 0.4);
+  color: #d0d0d0;
+}
+
+.status-ok {
+  background: rgba(0, 255, 170, 0.12);
+  border-color: rgba(0, 255, 170, 0.6);
+  color: #7dffcf;
+}
+
+.status-drift {
+  background: rgba(255, 80, 80, 0.12);
+  border-color: rgba(255, 80, 80, 0.7);
+  color: #ffb3b3;
+}
+
+.status-details {
+  font-size: 0.8rem;
+  color: #c3c8ff;
+  white-space: pre-wrap;
+}
+
+/* Button bar */
+
+.button-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.op-button {
+  position: relative;
+  padding: 8px 14px;
+  border-radius: 4px;
+  border: 1px solid rgba(0, 255, 255, 0.4);
+  background: linear-gradient(135deg, rgba(10, 20, 40, 0.95), rgba(5, 10, 25, 0.95));
+  color: #e5e9ff;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+  outline: none;
+  transition: background 0.12s ease, box-shadow 0.12s ease, transform 0.06s ease;
+  box-shadow: 0 0 10px rgba(0, 255, 255, 0.25);
+}
+
+.op-button::before {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  border: 1px solid rgba(0, 255, 255, 0.35);
+  opacity: 0.4;
+  pointer-events: none;
+}
+
+.op-button:hover {
+  background: linear-gradient(135deg, rgba(20, 40, 80, 1), rgba(10, 20, 50, 1));
+  box-shadow: 0 0 16px rgba(0, 255, 255, 0.45);
+  transform: translateY(-1px);
+}
+
+.op-button:active {
+  transform: translateY(0);
+  box-shadow: 0 0 8px rgba(0, 255, 255, 0.3);
+}
+
+/* Modal */
+
+.modal-container {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal-container.hidden {
+  display: none;
+}
+
+.modal-backdrop {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at top, rgba(0, 0, 0, 0.8), rgba(0, 0, 0, 0.95));
+}
+
+.modal {
+  position: relative;
+  width: 520px;
+  max-width: 90vw;
+  background: #050814;
+  border-radius: 6px;
+  border: 1px solid rgba(0, 255, 255, 0.5);
+  box-shadow: 0 0 24px rgba(0, 255, 255, 0.4);
+  padding: 10px 12px 12px 12px;
+  z-index: 1001;
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+#modal-title {
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: #7df9ff;
+}
+
+.modal-close {
+  border: none;
+  background: transparent;
+  color: #e5e9ff;
+  font-size: 1.1rem;
+  cursor: pointer;
+}
+
+.modal-body {
+  font-size: 0.8rem;
+  color: #c3c8ff;
+  max-height: 60vh;
+  overflow: auto;
+  white-space: pre-wrap;
+}
+
+/* JSON tree viewer */
+.json-tree {
+  font-family: "Fira Code", monospace;
+  font-size: 12px;
+  color: #9efcff;
+  background: rgba(5, 10, 20, 0.9);
+  border: 1px solid #1ef2ff;
+  padding: 8px;
+  max-height: 60vh;
+  overflow: auto;
+}
+
+.json-node {
+  margin-left: 12px;
+}
+
+.json-node-header {
+  cursor: pointer;
+  color: #ff6df2;
+  margin-bottom: 2px;
+}
+
+.json-node-children.collapsed {
+  display: none;
+}
+
+.json-key {
+  color: #7af7ff;
+}
+
+.json-value {
+  color: #f5ff9e;
+}
+
+/* Machine table */
+.machine-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 8px;
+  font-size: 12px;
+}
+
+.machine-table th,
+.machine-table td {
+  border: 1px solid #1ef2ff;
+  padding: 4px 6px;
+}
+
+.machine-table th {
+  background: rgba(10, 20, 40, 0.9);
+  color: #9efcff;
+  text-align: left;
+}
+
+.machine-table td.alive {
+  color: #7dff9e;
+}
+
+.machine-table td.offline {
+  color: #ff6d6d;
+}
+
+/* Modal footer buttons */
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 8px;
+  border-top: 1px solid #1ef2ff;
+  background: rgba(5, 10, 20, 0.95);
+}
+
+.modal-footer-button {
+  background: transparent;
+  border: 1px solid #1ef2ff;
+  color: #9efcff;
+  padding: 4px 10px;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.modal-footer-button:hover {
+  background: rgba(30, 242, 255, 0.1);
+}

@@ -1,0 +1,164 @@
+// ui/js/code_assistant.js
+// Code Assistant UI logic: wires prompt -> /api/jobs -> SSE stream
+
+import { createJob, streamJob, apiAddLEvent, apiGetFacts } from "./api.js";
+
+const refreshBtn = document.getElementById("ca-refresh-models");
+const promptEl = document.getElementById("ca-prompt");
+const modelEl = document.getElementById("ca-model");
+const runBtn = document.getElementById("ca-run");
+const clearBtn = document.getElementById("ca-clear");
+const outputEl = document.getElementById("ca-output");
+const statusEl = document.getElementById("ca-status");
+
+async function loadModelDropdown() {
+  try {
+    const resp = await fetch("/api/models");
+    const data = await resp.json();
+
+    // Clear existing options
+    modelEl.innerHTML = "";
+
+    // Populate new options
+    for (const model of data.models) {
+      const opt = document.createElement("option");
+      opt.value = model;
+      opt.textContent = model;
+      modelEl.appendChild(opt);
+    }
+
+    console.log("Model dropdown updated:", data.models);
+  } catch (e) {
+    console.error("Failed to load model dropdown", e);
+    setStatus("Failed to load model list.");
+  }
+}
+
+let currentStream = null;
+
+function setStatus(text) {
+  statusEl.textContent = text;
+}
+
+function appendOutput(text) {
+  outputEl.textContent += text;
+  outputEl.scrollTop = outputEl.scrollHeight;
+}
+
+function resetOutput() {
+  outputEl.textContent = "";
+}
+refreshBtn.addEventListener("click", async () => {
+  setStatus("Refreshing model list...");
+
+  try {
+    const resp = await fetch("/api/models/refresh");
+    const data = await resp.json();
+    console.log("Model refresh result:", data);
+
+    await loadModelDropdown(); // This should re-populate the dropdown
+    setStatus("Model list updated.");
+  } catch (e) {
+    console.error("Model refresh failed", e);
+    setStatus("Failed to refresh model list.");
+  }
+});
+
+runBtn.addEventListener("click", async () => {
+  const prompt = promptEl.value.trim();
+  const model = modelEl.value;
+
+  if (!prompt) {
+    setStatus("Please enter a prompt first.");
+    return;
+  }
+
+  // Log user prompt into memory
+  await apiAddEvent({
+    user_id: "b",
+    session_id: "code-assistant",
+    role: "user",
+    content: prompt,
+  });
+
+  if (currentStream) {
+    currentStream.close();
+    currentStream = null;
+  }
+
+  resetOutput();
+  setStatus(`Creating job on control plane with model ${model}...`);
+
+  try {
+    // 1. Fetch memory facts for this user
+    const userId = "b";
+    const facts = await apiGetFacts(userId);
+
+    // 2. Build enriched prompt
+    const memoryContext = facts.facts
+      .map((f) => `- ${f.fact}`)
+      .join("\n");
+
+    const enrichedPrompt = `
+You are the code assistant for user B.
+
+Here are durable facts about the user:
+${memoryContext || "(no stored facts yet)"}
+
+User prompt:
+${prompt}
+`;
+
+    // 3. Create job with enriched prompt
+    const job = await createJob("code_assist", model, {
+      prompt: enrichedPrompt,
+    });
+
+    setStatus(`Job ${job.id} running on cluster. Streaming output...`);
+
+    // 4. Stream job output
+    currentStream = streamJob(
+      job.id,
+      (token) => {
+        const chunk = token?.message?.content ?? "";
+        if (chunk) {
+          appendOutput(chunk);
+
+          // Log assistant output into memory
+          apiAddEvent({
+            user_id: "b",
+            session_id: "code-assistant",
+            role: "assistant",
+            content: chunk,
+          });
+        }
+      },
+      () => {
+        setStatus(`Job completed.`);
+        currentStream = null;
+      },
+      (err) => {
+        console.error("Stream error", err);
+        setStatus("Stream error. Check worker and control plane logs.");
+        currentStream = null;
+      }
+    );
+  } catch (e) {
+    console.error(e);
+    setStatus(`Error creating job: ${e.message}`);
+  }
+});
+
+clearBtn.addEventListener("click", () => {
+  promptEl.value = "";
+  resetOutput();
+  setStatus("Cleared. Ready.");
+  if (currentStream) {
+    currentStream.close();
+    currentStream = null;
+  }
+});
+
+window.addEventListener("DOMContentLoaded", async () => {
+  await loadModelDropdown();
+});

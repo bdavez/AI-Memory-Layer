@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Datacenter Control Plane</title>
+  <link rel="stylesheet" href="css/neon.css">
+</head>
+<body>
+  <div id="app">
+    <header class="cp-header">
+      <div class="cp-title">Datacenter Control Plane</div>
+      <div class="cp-subtitle">Canonical State · Drift · Actions</div>
+    </header>
+
+    <main class="cp-main">
+
+      <!-- LEFT COLUMN -->
+      <section class="cp-status-panel">
+        <h2>Status</h2>
+
+        <div class="machine-selector">
+          <label for="machine-select">Machine:</label>
+          <select id="machine-select"></select>
+        </div>
+        <div class="machine-filters">
+          <input id="machine-search" class="machine-search" type="text" placeholder="Search name or role…">
+          <label class="machine-filter-toggle"><input type="checkbox" id="filter-alive"> Alive only</label>
+          <label class="machine-filter-toggle"><input type="checkbox" id="filter-gpu"> GPU nodes</label>
+          <label class="machine-filter-toggle"><input type="checkbox" id="filter-busy"> Busy only</label>
+          <label class="machine-filter-toggle"><input type="checkbox" id="filter-focus"> Focus mode</label>
+        </div>
+
+        <div id="status-indicator" class="status-indicator status-unknown">
+          <span class="status-label">Unknown</span>
+        </div>
+
+        <div id="status-details" class="status-details">
+          Waiting for status…
+        </div>
+
+        <div id="gpu-cluster-summary" class="gpu-cluster-summary"></div>
+
+        <div id="machine-table"></div>
+
+        <!-- Heartbeat cards belong in the LEFT column -->
+        <div id="heartbeat-pane"></div>
+      </section>
+
+      <!-- RIGHT COLUMN -->
+
+      <section class="cp-operator-panel">
+        <h2>Operator Actions</h2>
+
+        <!-- Cluster Summary Pane -->
+        <div id="cluster-summary-pane"></div>
+
+        <!-- Cluster Trend Pane -->
+        <div id="cluster-trend-pane"></div>
+
+        <!-- Task Activity Pane -->
+        <div id="task-activity-pane"></div>
+
+        <!-- Jobs Pane -->
+        <div id="jobs-pane" class="cp-operator-panel" style="margin-top: 12px; display: none;">
+          <h2>Jobs</h2>
+          <div id="jobs-content">Loading jobs…</div>
+        </div>
+
+        <div class="button-bar">
+          <button class="op-button" data-action="open-code-assistant">Code Assistant</button>
+          <button class="op-button" data-action="view-memory">Memory</button>
+          <button class="op-button" data-action="refresh-status">Refresh Status</button>
+          <button class="op-button" data-action="run-compile">Run Compile</button>
+          <button class="op-button" data-action="view-canonical">View Canonical State</button>
+          <button class="op-button" data-action="view-diff">View Drift Diff</button>
+          <button class="op-button" data-action="view-vm-inventory">View VM Inventory</button>
+          <button class="op-button" data-action="view-storage-map">View Storage Map</button>
+          <button class="op-button" data-action="view-compile-history">Compile History</button>
+          <button class="op-button" data-action="view-jobs">Jobs</button>
+        </div>
+
+        <!-- CLUSTER MEMORY -->
+        <div id="memory-pane" class="cp-operator-panel">
+          <div class="memory-toggle">
+            <label>
+              <input type="checkbox" id="memory-auto-toggle">
+              Automatic Summarization
+            </label>
+          </div>
+
+          <div class="memory-facts-header">
+            <span>Durable Facts</span>
+            <button id="memory-summarize-btn" class="op-button small">Summarize to Facts</button>
+          </div>
+
+          <div id="memory-facts-list" class="memory-facts-list">
+            <div class="empty">No stored facts yet.</div>
+          </div>
+        </div>
+      </section>
+
+    </main>
+
+    <section id="modal-container" class="modal-container hidden">
+      <div class="modal-backdrop"></div>
+      <div class="modal">
+        <div class="modal-header">
+          <span id="modal-title">Modal Title</span>
+          <button id="modal-close" class="modal-close">&times;</button>
+        </div>
+        <div id="modal-body" class="modal-body">
+          Modal content goes here.
+        </div>
+        <div class="modal-footer">
+          <button id="modal-download" class="modal-footer-button">Download JSON</button>
+          <button id="modal-close-footer" class="modal-footer-button">Close</button>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <script type="module" src="js/api.js"></script>
+  <script type="module" src="js/modal.js"></script>
+  <script type="module" src="js/status.js"></script>
+  <script type="module" src="js/buttons.js"></script>
+  <script type="module" src="js/jsonviewer.js"></script>
+  <script type="module" src="js/diff.js"></script>
+  <script type="module" src="js/main.js"></script>
+  <script type="module" src="js/jobs.js"></script>
+
+  <div id="canonical-diff-modal" class="modal hidden">
+    <div class="modal-content neon-modal">
+      <div class="modal-header">
+        <h3>Canonical vs Live Diff</h3>
+        <button id="btn-close-canonical-diff" class="modal-close">×</button>
+      </div>
+      <pre id="canonical-diff-json" class="json-viewer"></pre>
+      <div class="modal-footer">
+        <button id="btn-download-canonical-diff" class="op-btn">DOWNLOAD DIFF JSON</button>
+        <button id="btn-close-canonical-diff-footer" class="op-btn">CLOSE</button>
+      </div>
+    </div>
+  </div>
+
+</body>
+</html>

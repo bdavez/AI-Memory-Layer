@@ -1,0 +1,48 @@
+roles:
+  gpu_training:
+    description: "GPU training node for large models."
+    cpu_cores_min: 6
+    ram_gb_min: 32
+    gpus_min: 1
+
+  gpu_inference:
+    description: "GPU inference node."
+    cpu_cores_min: 6
+    ram_gb_min: 32
+    gpus_min: 1
+
+  cpu_compute:
+    description: "Flexible CPU compute node."
+    cpu_cores_min: 6
+    ram_gb_min: 32
+    gpus_min: 0
+
+  xcp_host:
+    description: "XCP-ng hypervisor host with optional GPU passthrough."
+    cpu_cores_min: 6
+    ram_gb_min: 32
+    gpus_min: 1
+
+  control_plane:
+    description: "Primary control plane and orchestration node."
+    cpu_cores_min: 6
+    ram_gb_min: 16
+    gpus_min: 0
+
+  backup:
+    description: "Backup / cold storage / future roles."
+    cpu_cores_min: 0
+    ram_gb_min: 0
+    gpus_min: 0
+
+  bridge:
+    description: "Network bridge / utility / ARM helper."
+    cpu_cores_min: 0
+    ram_gb_min: 4
+    gpus_min: 0
+
+  arm_workload:
+    description: "ARM workload tier (Rock 5B, Dragon Q6A, etc.)."
+    cpu_cores_min: 0
+    ram_gb_min: 0
+    gpus_min: 0

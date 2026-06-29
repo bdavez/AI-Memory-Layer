@@ -1,0 +1,4 @@
+echo "__pycache__/" >> .gitignore
+echo "*.pyc" >> .gitignore
+echo "*.bak" >> .gitignore
+echo "patch_*.py" >> .gitignore

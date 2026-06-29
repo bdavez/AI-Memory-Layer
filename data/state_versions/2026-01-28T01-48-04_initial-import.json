@@ -1,0 +1,134 @@
+{
+  "arm_layer": {
+    "pending_nvme_delivery": "128GB Bestoss NVMe",
+    "spare_drives": [
+      "ADATA Legend 900 Pro 2TB",
+      "ADATA Legend 900 Pro 2TB",
+      "ADATA Legend 900 Pro 2TB",
+      "ADATA Legend 900 Pro 2TB"
+    ]
+  },
+  "description": "initial-import",
+  "machines": [
+    {
+      "cpu": 16,
+      "gpus": [
+        {
+          "index": 0,
+          "mem_total": 16376,
+          "metadata": {},
+          "name": "NVIDIA GeForce RTX 4070 Ti SUPER"
+        }
+      ],
+      "ip": "192.168.50.10",
+      "metadata": {
+        "notes": "Primary GPU inference node"
+      },
+      "name": "Machine-A",
+      "ram_mb": 65536,
+      "role": [
+        "worker",
+        "inference",
+        "ml",
+        "gpu"
+      ],
+      "storage": {
+        "nvme": [],
+        "os_drive": "Lexar 1TB SATA",
+        "sata": []
+      }
+    },
+    {
+      "cpu": 8,
+      "gpus": [],
+      "ip": "192.168.50.11",
+      "metadata": {
+        "notes": "Follows SATA OS + two NVMe rule"
+      },
+      "name": "Machine-B",
+      "ram_mb": 32768,
+      "role": [
+        "worker"
+      ],
+      "storage": {
+        "nvme": [
+          "ADATA Legend 900 Pro 2TB",
+          "ADATA Legend 900 Pro 2TB"
+        ],
+        "os_drive": "SATA SSD",
+        "sata": []
+      }
+    },
+    {
+      "cpu": 8,
+      "gpus": [],
+      "ip": "192.168.50.12",
+      "metadata": {
+        "notes": "Canonical storage table locked"
+      },
+      "name": "Machine-C",
+      "ram_mb": 32768,
+      "role": [
+        "worker"
+      ],
+      "storage": {
+        "nvme": [
+          "WD Black SN770 1TB (Windows partitions)"
+        ],
+        "sata": [
+          "Kingston SA400S3 447GB (sdb)",
+          "Corsair Neutron XTI 223GB (sda3 partition)"
+        ]
+      }
+    },
+    {
+      "cpu": 8,
+      "gpus": [],
+      "ip": "192.168.50.13",
+      "metadata": {
+        "notes": "ARM cluster coordination node"
+      },
+      "name": "Machine-D",
+      "ram_mb": 65536,
+      "role": [
+        "worker",
+        "arm-link"
+      ],
+      "storage": {}
+    }
+  ],
+  "metadata": {
+    "notes": "Operator-grade canonical state",
+    "owner": "B",
+    "project": "Mini AI Datacenter"
+  },
+  "network": {
+    "dns": [
+      "1.1.1.1",
+      "8.8.8.8"
+    ],
+    "gateway": "192.168.50.1",
+    "subnet": "192.168.50.0/24"
+  },
+  "storage_plan": {
+    "canonical_snapshot": "2026-01-18 13:15 MST",
+    "notes": "This snapshot is the authoritative baseline for all future drift detection."
+  },
+  "version": "2026-01-18T13:15-MST",
+  "vm_inventory": [
+    {
+      "cpu": 2,
+      "ip": "192.168.50.60",
+      "name": "control-plane",
+      "ram_mb": 4096,
+      "role": "control-plane"
+    },
+    {
+      "cpu": 2,
+      "ip": "192.168.50.201",
+      "name": "vm-ml-node-01",
+      "ram_mb": 4096,
+      "role": "ml-inference-node"
+    }
+  ]
+}

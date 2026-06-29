@@ -1,0 +1,52 @@
+
+function wireButtons() {
+  const buttons = document.querySelectorAll(".op-button");
+  buttons.forEach((btn) => {
+    const action = btn.getAttribute("data-action");
+    btn.addEventListener("click", () => handleButtonAction(action, btn));
+  });
+
+  document.getElementById("modal-download").addEventListener("click", () => {
+    if (window.__modalJsonData) {
+      downloadJson(window.__modalJsonData);
+    }
+  });
+
+  document.getElementById("modal-close-footer").addEventListener("click", closeModal);
+}
+
+async function handleButtonAction(action, buttonEl) {
+  if (!action) return;
+
+  buttonEl.disabled = true;
+  const originalText = buttonEl.textContent;
+  buttonEl.textContent = "Working…";
+
+  try {
+    if (action === "refresh-status") {
+      await refreshStatus();
+
+    } else if (action === "run-compile") {
+      const result = await apiRunCompile();
+      openModalTree("Compile Result", result);
+      await refreshStatus();
+
+    } else if (action === "view-canonical") {
+      const canonical = await apiGetCanonical();
+      openModalTree("Canonical State", canonical);
+
+    } else if (action === "view-diff") {
+      const canonical = await apiGetCanonical();
+      const status = await apiGetStatus();
+      const diff = diffObjects(canonical, status);
+      openModalTree("Drift Diff", diff);
+    }
+
+  } catch (err) {
+    openModal("Error", err.message || String(err));
+
+  } finally {
+    buttonEl.disabled = false;
+    buttonEl.textContent = originalText;
+  }
+}

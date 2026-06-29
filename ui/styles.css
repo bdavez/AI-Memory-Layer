@@ -1,0 +1,114 @@
+:root {
+  --status-healthy: #39ff14;      /* neon green */
+  --status-warning: #ff66cc;      /* neon pink */
+  --status-busy:    #ffb347;      /* neon orange/yellow */
+  --status-unknown: #7f8c8d;      /* soft grey */
+  --status-dead:    #ff1744;      /* neon red */
+
+  --status-pill-bg: rgba(0, 0, 0, 0.6);
+  --status-pill-border: rgba(255, 255, 255, 0.15);
+}
+
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  border: 1px solid var(--status-pill-border);
+  background: var(--status-pill-bg);
+  box-shadow: 0 0 6px rgba(0, 0, 0, 0.8);
+}
+
+.status-pill::before {
+  content: "";
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-right: 6px;
+  box-shadow: 0 0 8px currentColor;
+}
+
+.status-healthy { color: var(--status-healthy); }
+.status-warning { color: var(--status-warning); }
+.status-busy    { color: var(--status-busy); }
+.status-unknown { color: var(--status-unknown); }
+.status-dead    { color: var(--status-dead); }
+.status-section {
+  margin-top: 12px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: radial-gradient(circle at top left, rgba(0,255,255,0.08), transparent),
+              rgba(5, 5, 15, 0.95);
+  border: 1px solid rgba(0, 255, 255, 0.12);
+}
+
+.status-section-header {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: #9fa8da;
+  margin-bottom: 6px;
+}
+
+.hb-group {
+  margin-top: 8px;
+}
+
+.hb-group-title {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #b0bec5;
+  margin-bottom: 4px;
+}
+
+.hb-group-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+  gap: 6px;
+}
+
+.hb-card {
+  padding: 6px 8px;
+  border-radius: 6px;
+  background: rgba(10, 10, 25, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.7);
+}
+
+.hb-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
+}
+
+.hb-name {
+  font-size: 12px;
+  font-weight: 600;
+  color: #e0f7fa;
+}
+
+.hb-card-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  font-size: 10px;
+  color: #b0bec5;
+  margin-bottom: 3px;
+}
+
+.hb-meta-item {
+  opacity: 0.85;
+}
+
+.hb-card-reason {
+  font-size: 10px;
+  color: #c5cae9;
+  opacity: 0.9;
+}

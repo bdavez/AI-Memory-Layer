@@ -1,0 +1,36 @@
+{
+  "version": 1,
+  "description": "Authoritative canonical state for mini AI datacenter.",
+  "machines": [
+    {
+      "name": "vm-ml-node-01",
+      "role": "ml-inference-node",
+      "ip": "192.168.50.201",
+      "cpu_cores": 8,
+      "ram_gb": 32,
+      "gpus": [],
+      "storage": [
+        {
+          "device": "/dev/nvme0n1",
+          "size_gb": 512,
+          "partitions": [
+            {
+              "name": "root",
+              "mount": "/",
+              "fs": "ext4",
+              "size_gb": 200
+            },
+            {
+              "name": "data",
+              "mount": "/data",
+              "fs": "ext4",
+              "size_gb": 300
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "spares": [],
+  "pending": []
+}
