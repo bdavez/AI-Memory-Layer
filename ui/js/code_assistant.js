@@ -1,209 +1,126 @@
 // ui/js/code_assistant.js
-// Code Assistant UI logic: wires prompt -> /api/jobs -> SSE stream
+// Multi-user Code Assistant with model selection, diff mode, and neon UI.
 
-import { createJob, streamJob, apiAddEvent, apiGetFacts } from "./api.js";
-
-// UI elements
-const refreshBtn = document.getElementById("ca-refresh-models");
-const promptEl = document.getElementById("ca-prompt");
-const modelEl = document.getElementById("ca-model");
-const modeEl = document.getElementById("ca-mode");   // NEW for Phase 2
-const runBtn = document.getElementById("ca-run");
-const clearBtn = document.getElementById("ca-clear");
-const outputEl = document.getElementById("ca-output");
-const statusEl = document.getElementById("ca-status");
-
-let currentStream = null;
+import { getJSON, postJSON } from "./api.js";
 
 // ---------------------------------------------------------
-// Helpers
+// DOM Helpers
 // ---------------------------------------------------------
+const $ = (id) => document.getElementById(id);
 
-function setStatus(text) {
-  statusEl.textContent = text;
+function setStatus(msg) {
+  $("ca-status").textContent = msg;
 }
 
-function appendOutput(text) {
-  outputEl.textContent += text;
-  outputEl.scrollTop = outputEl.scrollHeight;
-}
-
-function resetOutput() {
-  outputEl.textContent = "";
+function setOutput(text) {
+  $("ca-output").textContent = text;
 }
 
 // ---------------------------------------------------------
-// Model Dropdown Loader
+// Load Users (shared with Memory Debug Panel)
 // ---------------------------------------------------------
+async function loadUsers() {
+  const dump = await getJSON("/api/memory/dump");
+  const users = Object.keys(dump.facts || {});
+  const sel = $("ca-user");
 
-async function loadModelDropdown() {
-  try {
-    const resp = await fetch("/api/models");
-    const data = await resp.json();
+  sel.innerHTML = "";
+  users.forEach((u) => {
+    const opt = document.createElement("option");
+    opt.value = u;
+    opt.textContent = u;
+    sel.appendChild(opt);
+  });
 
-    modelEl.innerHTML = "";
-
-    for (const model of data.models) {
-      const opt = document.createElement("option");
-      opt.value = model;
-      opt.textContent = model;
-      modelEl.appendChild(opt);
-    }
-
-    console.log("Model dropdown updated:", data.models);
-  } catch (e) {
-    console.error("Failed to load model dropdown", e);
-    setStatus("Failed to load model list.");
-  }
+  return users[0] || null;
 }
 
 // ---------------------------------------------------------
-// System Prompt Builder (Phase 2)
+// Load Models
 // ---------------------------------------------------------
+async function loadModels() {
+  const res = await getJSON("/api/models");
 
-function buildSystemPrompt({ userId, facts, mode, userPrompt }) {
-  const memoryContext = facts.map((f) => `- ${f.fact}`).join("\n");
+  // Accept both { models: [...] } and [...]
+  const models = Array.isArray(res) ? res : res.models;
 
-  if (mode === "diff") {
-    return `
-You are a code diff assistant. You generate minimal, clean patches.
-Durable facts:
-${memoryContext || "(none yet)"}
-
-User diff request:
-${userPrompt}
-`;
-  }
-
-  // Standard mode
-  return `
-You are the code assistant for user ${userId}.
-
-Durable facts:
-${memoryContext || "(none yet)"}
-
-User prompt:
-${userPrompt}
-`;
-}
-
-// ---------------------------------------------------------
-// Refresh Models Button
-// ---------------------------------------------------------
-
-refreshBtn.addEventListener("click", async () => {
-  setStatus("Refreshing model list...");
-
-  try {
-    const resp = await fetch("/api/models/refresh");
-    const data = await resp.json();
-    console.log("Model refresh result:", data);
-
-    await loadModelDropdown();
-    setStatus("Model list updated.");
-  } catch (e) {
-    console.error("Model refresh failed", e);
-    setStatus("Failed to refresh model list.");
-  }
-});
-
-// ---------------------------------------------------------
-// RUN Button
-// ---------------------------------------------------------
-
-runBtn.addEventListener("click", async () => {
-  const prompt = promptEl.value.trim();
-  const model = modelEl.value;
-  const mode = modeEl.value || "standard";
-
-  if (!prompt) {
-    setStatus("Please enter a prompt first.");
+  if (!Array.isArray(models)) {
+    console.error("Invalid /api/models response:", res);
+    setStatus("Model list unavailable.");
     return;
   }
 
-  // Log user prompt into memory
-  await apiAddEvent({
-    user_id: "b",
-    session_id: "code-assistant",
-    role: "user",
-    content: prompt,
-  });
+  const sel = $("ca-model");
+  sel.innerHTML = "";
 
-  if (currentStream) {
-    currentStream.close();
-    currentStream = null;
+  models.forEach((m) => {
+    const opt = document.createElement("option");
+    opt.value = m;
+    opt.textContent = m;
+    sel.appendChild(opt);
+  });
+}
+// ---------------------------------------------------------
+// Run Code Assistant
+// ---------------------------------------------------------
+async function runAssistant() {
+  const userId = $("ca-user").value;
+  const model = $("ca-model").value;
+  const mode = $("ca-mode").value;
+  const prompt = $("ca-prompt").value.trim();
+
+  if (!prompt) {
+    setStatus("Prompt is empty.");
+    return;
   }
 
-  resetOutput();
-  setStatus(`Creating job on control plane with model ${model}...`);
+  setStatus("Running…");
 
   try {
-    const userId = "b";
-    const facts = await apiGetFacts(userId);
-
-    const enrichedPrompt = buildSystemPrompt({
-      userId,
-      facts: facts.facts,
+    const result = await postJSON("/api/assistant/run", {
+      user_id: userId,
+      model,
       mode,
-      userPrompt: prompt,
+      prompt,
     });
 
-    const job = await createJob("code_assist", model, {
-      prompt: enrichedPrompt,
-    });
-
-    setStatus(`Job ${job.id} running on cluster. Streaming output...`);
-
-    currentStream = streamJob(
-      job.id,
-      (token) => {
-        const chunk = token?.message?.content ?? "";
-        if (chunk) {
-          appendOutput(chunk);
-
-          apiAddEvent({
-            user_id: "b",
-            session_id: "code-assistant",
-            role: "assistant",
-            content: chunk,
-          });
-        }
-      },
-      () => {
-        setStatus(`Job completed.`);
-        currentStream = null;
-      },
-      (err) => {
-        console.error("Stream error", err);
-        setStatus("Stream error. Check worker and control plane logs.");
-        currentStream = null;
-      }
-    );
-  } catch (e) {
-    console.error(e);
-    setStatus(`Error creating job: ${e.message}`);
+    setOutput(result.output || "(no output)");
+    setStatus("Done.");
+  } catch (err) {
+    console.error("Assistant error:", err);
+    setOutput("Error running assistant.");
+    setStatus("Error.");
   }
-});
+}
 
 // ---------------------------------------------------------
-// CLEAR Button
+// Clear Output
 // ---------------------------------------------------------
-
-clearBtn.addEventListener("click", () => {
-  promptEl.value = "";
-  resetOutput();
-  setStatus("Cleared. Ready.");
-
-  if (currentStream) {
-    currentStream.close();
-    currentStream = null;
-  }
-});
+function clearOutput() {
+  $("ca-output").textContent = "";
+  $("ca-prompt").value = "";
+  setStatus("Cleared.");
+}
 
 // ---------------------------------------------------------
-// On Page Load
+// Init
 // ---------------------------------------------------------
+async function init() {
+  setStatus("Loading…");
 
-window.addEventListener("DOMContentLoaded", async () => {
-  await loadModelDropdown();
-});
+  // Load users
+  const firstUser = await loadUsers();
+  if (firstUser) $("ca-user").value = firstUser;
+
+  // Load models
+  await loadModels();
+
+  // Wire buttons
+  $("ca-run").onclick = runAssistant;
+  $("ca-clear").onclick = clearOutput;
+  $("ca-refresh-models").onclick = loadModels;
+
+  setStatus("Ready.");
+}
+
+window.addEventListener("DOMContentLoaded", init);

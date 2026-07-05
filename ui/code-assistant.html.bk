@@ -4,9 +4,7 @@
   <meta charset="UTF-8">
   <title>Code Assistant · Datacenter</title>
   <link rel="stylesheet" href="css/neon.css">
-
   <style>
-    /* Your existing neon styling preserved exactly */
     #ca-refresh-models {
       background: linear-gradient(135deg, #0ff, #f0f);
       color: black;
@@ -19,6 +17,7 @@
       transition: all 0.2s ease-in-out;
       cursor: pointer;
     }
+
     #ca-refresh-models:hover {
       background: linear-gradient(135deg, #f0f, #0ff);
       box-shadow: 0 0 12px #f0f, 0 0 6px #0ff;
@@ -112,6 +111,7 @@
     }
 
     .ca-button {
+      position: relative;
       padding: 8px 14px;
       border-radius: 4px;
       border: 1px solid rgba(0, 255, 255, 0.4);
@@ -121,6 +121,7 @@
       text-transform: uppercase;
       letter-spacing: 0.08em;
       cursor: pointer;
+      outline: none;
       transition: background 0.12s ease, box-shadow 0.12s ease, transform 0.06s ease;
       box-shadow: 0 0 10px rgba(0, 255, 255, 0.25);
     }
@@ -129,6 +130,11 @@
       background: linear-gradient(135deg, rgba(20, 40, 80, 1), rgba(10, 20, 50, 1));
       box-shadow: 0 0 16px rgba(0, 255, 255, 0.45);
       transform: translateY(-1px);
+    }
+
+    .ca-button:active {
+      transform: translateY(0);
+      box-shadow: 0 0 8px rgba(0, 255, 255, 0.3);
     }
 
     .ca-output {
@@ -151,47 +157,29 @@
       color: #9fa8ff;
       opacity: 0.85;
     }
-    .ca-user-select select {
-      background: rgba(5,10,30,0.9);
-      border: 1px solid rgba(0,255,255,0.4);
-      color: #e5e9ff;
-      padding: 6px 8px;
-      border-radius: 4px;
-      font-size: 0.85rem;
-    }
-
-    </style>
+  </style>
 </head>
-
 <body>
   <div class="ca-root">
-
     <header class="ca-header">
       <div class="ca-title">Code Assistant</div>
       <div class="ca-subtitle">Backed by your mini AI datacenter · Machine‑A · DeepSeek‑Coder</div>
     </header>
 
     <main class="ca-main">
-
-      <!-- LEFT PANEL -->
+      <!-- LEFT: Prompt + model -->
       <section class="ca-panel">
-        <div class="ca-user-select">
-        <label for="ca-user">User:</label>
-        <select id="ca-user"></select>
-        </div>
-
         <h2>Prompt</h2>
-
         <div class="ca-field-label">Model</div>
-        <select id="ca-model" class="ca-select"></select>
+        <select id="ca-model" class="ca-select">
+          <!-- Populated dynamically from /api/models -->
+        </select>
         <button id="ca-refresh-models">Refresh Models</button>
-
         <label for="ca-mode">Mode:</label>
-        <select id="ca-mode" class="ca-select">
+        <select id="ca-mode">
           <option value="standard">Standard</option>
           <option value="diff">Diff Mode</option>
         </select>
-
         <div class="ca-field-label">Instruction / Code Context</div>
         <textarea id="ca-prompt" class="ca-textarea" placeholder="Describe what you want, or paste code to refactor..."></textarea>
 
@@ -200,15 +188,16 @@
           <button id="ca-clear" class="ca-button">Clear</button>
         </div>
 
-        <div id="ca-status" class="ca-status-line">Ready.</div>
+        <div id="ca-status" class="ca-status-line">
+          Ready.
+        </div>
       </section>
 
-      <!-- RIGHT PANEL -->
+      <!-- RIGHT: Streaming output -->
       <section class="ca-panel">
         <h2>Assistant Output</h2>
         <div id="ca-output" class="ca-output"></div>
       </section>
-
     </main>
   </div>
 

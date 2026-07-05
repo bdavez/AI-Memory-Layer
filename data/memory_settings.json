@@ -1,4 +1,26 @@
 {
-  "auto_summarize": true,
-  "event_threshold": 50
+  "debounce_seconds": 60,
+  "min_events_for_summary": 10,
+  "max_events_per_user": 500,
+  "max_facts_per_user": 200,
+  "enable_auto_summarize": true,
+  "enable_manual_summarize": true,
+  "domain_keywords": [
+    "code",
+    "coding",
+    "programming",
+    "python",
+    "javascript",
+    "gpu",
+    "server",
+    "cluster",
+    "datacenter",
+    "vm",
+    "storage",
+    "job",
+    "compile",
+    "deployment",
+    "backend",
+    "frontend"
+  ]
 }

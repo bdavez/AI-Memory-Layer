@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Memory Debug · Datacenter</title>
+  <link rel="stylesheet" href="css/neon.css" />
+
+  <style>
+    /* --- Memory Debug Panel Styling --- */
+
+    body {
+      background: #050711;
+      color: #e5e9ff;
+      font-family: system-ui, sans-serif;
+      margin: 0;
+      padding: 0;
+    }
+
+    .md-root {
+      max-width: 1200px;
+      margin: 24px auto;
+      padding: 20px;
+      background: radial-gradient(circle at top left, #151a33, #050711 60%);
+      border-radius: 8px;
+      border: 1px solid rgba(0,255,255,0.25);
+      box-shadow: 0 0 24px rgba(0,255,255,0.15);
+    }
+
+    .md-header {
+      margin-bottom: 20px;
+    }
+
+    .md-title {
+      font-size: 1.4rem;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: #7df9ff;
+    }
+
+    .md-subtitle {
+      font-size: 0.85rem;
+      color: #9fa8ff;
+      opacity: 0.9;
+    }
+
+    .md-section {
+      margin-top: 20px;
+      padding: 14px;
+      border-radius: 6px;
+      background: rgba(5,10,30,0.9);
+      border: 1px solid rgba(0,255,255,0.2);
+      box-shadow: 0 0 12px rgba(0,255,255,0.08);
+    }
+
+    .md-section-header {
+      font-size: 0.95rem;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: #9fa8ff;
+      cursor: pointer;
+      margin-bottom: 8px;
+    }
+
+    .md-section-body {
+      display: none;
+      margin-top: 10px;
+      font-size: 0.85rem;
+    }
+
+    .md-section.open .md-section-body {
+      display: block;
+    }
+
+    .md-button {
+      padding: 6px 12px;
+      border-radius: 4px;
+      border: 1px solid rgba(0,255,255,0.4);
+      background: rgba(10,20,40,0.95);
+      color: #e5e9ff;
+      cursor: pointer;
+      margin-right: 8px;
+      margin-bottom: 8px;
+      text-transform: uppercase;
+      font-size: 0.75rem;
+      letter-spacing: 0.08em;
+    }
+
+    .md-button:hover {
+      background: rgba(20,40,80,1);
+      box-shadow: 0 0 12px rgba(0,255,255,0.45);
+    }
+
+    .md-json {
+      background: rgba(5,10,20,0.95);
+      border: 1px solid rgba(0,255,255,0.3);
+      padding: 10px;
+      border-radius: 6px;
+      font-family: "Fira Code", monospace;
+      font-size: 0.8rem;
+      white-space: pre-wrap;
+      overflow-x: auto;
+      max-height: 400px;
+    }
+
+    .md-fact {
+      display: flex;
+      justify-content: space-between;
+      padding: 6px 8px;
+      margin-bottom: 4px;
+      background: rgba(10,10,25,0.9);
+      border: 1px solid rgba(0,255,255,0.2);
+      border-radius: 4px;
+    }
+
+    .md-fact-edit {
+      width: 100%;
+      background: rgba(5,10,20,0.9);
+      border: 1px solid rgba(0,255,255,0.3);
+      color: #e5e9ff;
+      padding: 4px;
+      border-radius: 4px;
+      font-family: "Fira Code", monospace;
+      font-size: 0.8rem;
+    }
+
+    .md-delete {
+      background: transparent;
+      border: 1px solid #ff5252;
+      color: #ff5252;
+      padding: 2px 6px;
+      font-size: 10px;
+      cursor: pointer;
+      border-radius: 4px;
+    }
+
+    .md-delete:hover {
+      background: rgba(255,80,80,0.2);
+    }
+
+    .md-user-select {
+      margin-top: 10px;
+      margin-bottom: 20px;
+    }
+
+    .md-user-select select {
+      background: rgba(5,10,30,0.9);
+      border: 1px solid rgba(0,255,255,0.4);
+      color: #e5e9ff;
+      padding: 6px 8px;
+      border-radius: 4px;
+      font-size: 0.85rem;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="md-root">
+
+    <header class="md-header">
+      <div class="md-title">Memory Debug Panel</div>
+      <div class="md-subtitle">Operator-grade introspection for multi-user memory</div>
+    </header>
+
+    <!-- USER SELECTOR -->
+    <div class="md-user-select">
+      <label for="md-user">Select User:</label>
+      <select id="md-user"></select>
+      <button id="md-create-user" class="md-button">New User</button>
+    </div>
+
+    <!-- FACTS -->
+    <section class="md-section" id="md-facts">
+      <div class="md-section-header">Facts</div>
+      <div class="md-section-body">
+        <div id="md-facts-list">Loading…</div>
+      </div>
+    </section>
+
+    <!-- EVENTS -->
+    <section class="md-section" id="md-events">
+      <div class="md-section-header">Events</div>
+      <div class="md-section-body">
+        <div id="md-events-list">Loading…</div>
+      </div>
+    </section>
+
+    <!-- META -->
+    <section class="md-section" id="md-meta">
+      <div class="md-section-header">Metadata</div>
+      <div class="md-section-body">
+        <div id="md-meta-json" class="md-json">Loading…</div>
+      </div>
+    </section>
+
+    <!-- SUMMARIZER -->
+    <section class="md-section" id="md-summarizer">
+      <div class="md-section-header">Summarizer Tools</div>
+      <div class="md-section-body">
+        <button class="md-button" id="md-summarize">Summarize Now</button>
+        <button class="md-button" id="md-summarize-force">Force Summarize</button>
+        <button class="md-button" id="md-show-prompt">Show Last Prompt</button>
+        <button class="md-button" id="md-show-output">Show Last Output</button>
+
+        <div id="md-summarizer-output" class="md-json" style="margin-top:10px; display:none;"></div>
+      </div>
+    </section>
+
+    <!-- MEMORY DUMP -->
+    <section class="md-section" id="md-dump">
+      <div class="md-section-header">Memory Dump</div>
+      <div class="md-section-body">
+        <button class="md-button" id="md-load-dump">Load memory.json</button>
+        <button class="md-button" id="md-export-dump">Export</button>
+        <div id="md-dump-json" class="md-json" style="margin-top:10px;">Loading…</div>
+      </div>
+    </section>
+
+    <!-- SETTINGS -->
+    <section class="md-section" id="md-settings">
+      <div class="md-section-header">Settings</div>
+      <div class="md-section-body">
+        <div id="md-settings-json" class="md-json">Loading…</div>
+      </div>
+    </section>
+
+  </div>
+
+  <!-- JS -->
+  <script type="module" src="js/api.js"></script>
+  <script type="module" src="js/memory_debug.js"></script>
+</body>
+</html>

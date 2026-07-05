@@ -1,104 +1,73 @@
 // ui/js/memory.js
-// Memory Pane logic for durable facts + settings + manual summarize
 
-import { apiGetFacts } from "./api.js";
+export async function loadMemoryFacts(userId = "b") {
+  const resp = await fetch(`/api/memory/facts?user_id=${userId}`);
+  const data = await resp.json();
+  return data.facts || [];
+}
 
-export async function renderMemoryPane() {
-  const container = document.getElementById("memory-pane");
-  if (!container) return;
+export async function refreshMemoryUI() {
+  const container = document.getElementById("memory-facts-container");
+  container.innerHTML = "<p>Loading...</p>";
 
-  const userId = "b";
+  const facts = await loadMemoryFacts("b");
 
-  try {
-    // Load settings
-    const settingsResp = await fetch("/api/memory/settings");
-    const settings = await settingsResp.json();
-
-    // Load facts
-    const facts = await apiGetFacts(userId);
-
-    container.innerHTML = `
-      <div class="status-section">
-        <div class="status-section-header">Memory</div>
-
-        <div class="memory-toggle">
-          <label>
-            <input type="checkbox" id="memory-auto-toggle" ${
-              settings.auto_summarize ? "checked" : ""
-            }>
-            Automatic Summarization
-          </label>
-        </div>
-
-        <div class="memory-subheader">Durable Facts</div>
-        <div class="memory-facts">
-          ${
-            facts.facts.length === 0
-              ? `<div class="empty">No stored facts yet.</div>`
-              : facts.facts
-                  .map(
-                    (f, i) => `
-              <div class="memory-fact">
-                <div class="memory-fact-text">${f.fact}</div>
-                <button class="memory-delete" data-index="${i}">delete</button>
-              </div>
-            `
-                  )
-                  .join("")
-          }
-        </div>
-
-        <div class="memory-actions">
-          <button id="memory-summarize" class="op-button">Summarize to Facts</button>
-        </div>
-      </div>
-    `;
-
-    // Wire auto toggle
-    const autoToggle = document.getElementById("memory-auto-toggle");
-    if (autoToggle) {
-      autoToggle.addEventListener("change", async (e) => {
-        await fetch("/api/memory/settings", {
-          method: "POST",
-          body: JSON.stringify({ auto_summarize: e.target.checked }),
-          headers: { "Content-Type": "application/json" },
-        });
-      });
-    }
-
-    // Wire delete buttons
-    container.querySelectorAll(".memory-delete").forEach((btn) => {
-      btn.addEventListener("click", async () => {
-        const idx = btn.getAttribute("data-index");
-        await fetch(`/api/memory/facts/${idx}`, {
-          method: "DELETE",
-        });
-        renderMemoryPane();
-      });
-    });
-
-    // Wire manual summarize button
-    const summarizeBtn = document.getElementById("memory-summarize");
-    if (summarizeBtn) {
-      summarizeBtn.addEventListener("click", async () => {
-        const resp = await fetch("/api/memory/summarize", {
-          method: "POST",
-          body: JSON.stringify({ user_id: userId }),
-          headers: { "Content-Type": "application/json" },
-        });
-
-        if (!resp.ok) {
-          const err = await resp.json().catch(() => ({}));
-          alert(`Summarize failed: ${err.error || resp.statusText}`);
-          return;
-        }
-
-        const data = await resp.json();
-        alert(`Summarizer job started: ${data.job_id}`);
-      });
-    }
-  } catch (err) {
-    console.error("Failed to render memory pane:", err);
-    container.innerHTML = `<div class="error">Failed to load memory.</div>`;
+  if (!facts.length) {
+    container.innerHTML = "<p>No stored memory facts.</p>";
+    return;
   }
+
+  const html = facts
+    .map(
+      (f, i) => `
+      <div class="memory-fact">
+        <span>${f.fact}</span>
+        <button class="delete-fact" data-index="${i}">Delete</button>
+      </div>
+    `
+    )
+    .join("");
+
+  container.innerHTML = html;
+
+  // Wire delete buttons
+  document.querySelectorAll(".delete-fact").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      const index = btn.dataset.index;
+      await fetch(`/api/memory/facts/b/${index}`, { method: "DELETE" });
+      refreshMemoryUI();
+    });
+  });
+}
+
+export async function summarizeMemoryNow() {
+  await fetch("/api/memory/summarize", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ user_id: "b" }),
+  });
+
+  // Give backend a moment to ingest
+  setTimeout(refreshMemoryUI, 1500);
+}
+
+export function wireMemoryButtons() {
+  document
+    .getElementById("memory-refresh")
+    .addEventListener("click", refreshMemoryUI);
+
+  document
+    .getElementById("memory-summarize")
+    .addEventListener("click", summarizeMemoryNow);
+
+  document
+    .getElementById("memory-clear")
+    .addEventListener("click", async () => {
+      // Clear all facts for user b
+      const facts = await loadMemoryFacts("b");
+      for (let i = 0; i < facts.length; i++) {
+        await fetch(`/api/memory/facts/b/${i}`, { method: "DELETE" });
+      }
+      refreshMemoryUI();
+    });
 }

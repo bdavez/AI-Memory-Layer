@@ -1,9 +1,3 @@
-Absolutely, B — here is a clean, authoritative, operator‑grade document for your project.  
-It captures the current architecture, file roles, backend endpoints, UI logic, and upgrade paths.  
-This is the kind of doc you’d expect in a real datacenter control plane repo.
-
-You can drop this directly into:
-
 ```
 docs/control-plane.md
 ```
@@ -264,17 +258,3 @@ As of the latest patch:
 - Modal inspector works across all actions
 - Drift diff uses real data sources
 - Compile history accumulates entries
-
-Your control plane is now a fully operational, extensible foundation.
-
----
-
-If you want, I can also generate:
-
-- A **developer onboarding doc**  
-- A **canonical state schema**  
-- A **drift detection spec**  
-- A **storage map schema**  
-- A **compile pipeline design doc**  
-
-Just tell me which direction you want to expand next.

@@ -1,7 +1,7 @@
 import { renderJsonToElement } from "./jsonviewer.js";
 
 export function openJsonModal(title, data, filename = null) {
-  const container = document.getElementById("modal-container");
+  const container = document.getElementById("modal-container").classList.add("hidden");
   const titleEl = document.getElementById("modal-title");
   const body = document.getElementById("modal-body");
   const close = document.getElementById("modal-close");

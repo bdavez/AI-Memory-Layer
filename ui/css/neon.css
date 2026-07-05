@@ -1069,3 +1069,260 @@ body {
 .job-log-button:hover {
   background: rgba(0, 255, 170, 0.25);
 }
+
+/* --- Memory Panel Styles --- */
+#memory-pane {
+  padding: 20px;
+}
+
+.memory-fact-list {
+  list-style: none;
+  padding: 0;
+}
+
+.memory-fact-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 6px 0;
+  border-bottom: 1px solid #333;
+}
+
+.memory-delete {
+  background: #a33;
+  color: white;
+  border: none;
+  padding: 4px 8px;
+  cursor: pointer;
+}
+
+
+/* Layout fix: restore 2-column grid */
+.cp-main {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  align-items: start;
+}
+
+/* Panel styling for visual separation */
+.cp-status-panel,
+.cp-operator-panel {
+  padding: 12px;
+  background: rgba(10, 20, 40, 0.9);
+  border-radius: 6px;
+  border: 1px solid rgba(0, 255, 255, 0.2);
+  box-shadow: 0 0 12px rgba(0, 255, 255, 0.08);
+}
+
+/* === Control Plane Layout Fixes === */
+.cp-main {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  align-items: start;
+  margin-top: 20px;
+}
+
+/* Neon Panels */
+.cp-status-panel,
+.cp-operator-panel {
+  background: rgba(10, 20, 40, 0.9);
+  border-radius: 8px;
+  padding: 16px;
+  border: 1px solid rgba(0, 255, 255, 0.25);
+  box-shadow: 0 0 18px rgba(0, 255, 255, 0.15);
+}
+
+/* Machine Cards */
+.machine-card {
+  margin-bottom: 16px;
+  padding: 12px;
+  border-radius: 6px;
+  background: rgba(5, 10, 25, 0.9);
+  border: 1px solid rgba(0, 255, 255, 0.2);
+}
+
+/* Heartbeat Cards */
+.heartbeat-card {
+  margin-bottom: 10px;
+  padding: 8px;
+  border-radius: 4px;
+  background: rgba(5, 10, 20, 0.8);
+  border: 1px solid rgba(0, 255, 255, 0.15);
+}
+
+/* Sparkline Placeholder */
+.sparkline {
+  margin-top: 6px;
+  opacity: 0.85;
+}
+
+/* =========================================================
+   MEMORY DEBUG PANEL — NEON STYLING
+   ========================================================= */
+
+.md-root {
+  max-width: 1200px;
+  margin: 24px auto;
+  padding: 20px;
+  background: radial-gradient(circle at top left, #151a33, #050711 60%);
+  border-radius: 8px;
+  border: 1px solid rgba(0,255,255,0.25);
+  box-shadow: 0 0 24px rgba(0,255,255,0.15);
+  color: #e5e9ff;
+}
+
+.md-title {
+  font-size: 1.4rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: #7df9ff;
+}
+
+.md-subtitle {
+  font-size: 0.85rem;
+  color: #9fa8ff;
+  opacity: 0.9;
+}
+
+/* ------------------------------
+   Collapsible Sections
+------------------------------ */
+
+.md-section {
+  margin-top: 20px;
+  padding: 14px;
+  border-radius: 6px;
+  background: rgba(5,10,30,0.9);
+  border: 1px solid rgba(0,255,255,0.2);
+  box-shadow: 0 0 12px rgba(0,255,255,0.08);
+  transition: all 0.25s ease;
+}
+
+.md-section-header {
+  font-size: 0.95rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: #9fa8ff;
+  cursor: pointer;
+  user-select: none;
+  padding-bottom: 4px;
+  transition: color 0.2s ease, text-shadow 0.2s ease;
+}
+
+.md-section-header:hover {
+  color: #7df9ff;
+  text-shadow: 0 0 8px #7df9ff;
+}
+
+.md-section-body {
+  display: none;
+  margin-top: 10px;
+  font-size: 0.85rem;
+  animation: mdFadeIn 0.25s ease;
+}
+
+.md-section.open .md-section-body {
+  display: block;
+}
+
+@keyframes mdFadeIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ------------------------------
+   Buttons
+------------------------------ */
+
+.md-button {
+  padding: 6px 12px;
+  border-radius: 4px;
+  border: 1px solid rgba(0,255,255,0.4);
+  background: linear-gradient(135deg, rgba(10,20,40,0.95), rgba(5,10,25,0.95));
+  color: #e5e9ff;
+  cursor: pointer;
+  margin-right: 8px;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  transition: background 0.12s ease, box-shadow 0.12s ease, transform 0.06s ease;
+  box-shadow: 0 0 10px rgba(0,255,255,0.25);
+}
+
+.md-button:hover {
+  background: linear-gradient(135deg, rgba(20,40,80,1), rgba(10,20,50,1));
+  box-shadow: 0 0 16px rgba(0,255,255,0.45);
+  transform: translateY(-1px);
+}
+
+/* ------------------------------
+   JSON Blocks
+------------------------------ */
+
+.md-json {
+  background: rgba(5,10,20,0.95);
+  border: 1px solid rgba(0,255,255,0.3);
+  padding: 10px;
+  border-radius: 6px;
+  font-family: "Fira Code", monospace;
+  font-size: 0.8rem;
+  white-space: pre-wrap;
+  overflow-x: auto;
+  max-height: 400px;
+  color: #9efcff;
+}
+
+/* ------------------------------
+   Fact Editor
+------------------------------ */
+
+.md-fact {
+  display: flex;
+  justify-content: space-between;
+  padding: 6px 8px;
+  margin-bottom: 4px;
+  background: rgba(10,10,25,0.9);
+  border: 1px solid rgba(0,255,255,0.2);
+  border-radius: 4px;
+}
+
+.md-fact-edit {
+  width: 100%;
+  background: rgba(5,10,20,0.9);
+  border: 1px solid rgba(0,255,255,0.3);
+  color: #e5e9ff;
+  padding: 4px;
+  border-radius: 4px;
+  font-family: "Fira Code", monospace;
+  font-size: 0.8rem;
+}
+
+.md-delete {
+  background: transparent;
+  border: 1px solid #ff5252;
+  color: #ff5252;
+  padding: 2px 6px;
+  font-size: 10px;
+  cursor: pointer;
+  border-radius: 4px;
+  margin-left: 8px;
+}
+
+.md-delete:hover {
+  background: rgba(255,80,80,0.2);
+}
+
+/* ------------------------------
+   User Selector
+------------------------------ */
+
+.md-user-select select {
+  background: rgba(5,10,30,0.9);
+  border: 1px solid rgba(0,255,255,0.4);
+  color: #e5e9ff;
+  padding: 6px 8px;
+  border-radius: 4px;
+  font-size: 0.85rem;
+}
