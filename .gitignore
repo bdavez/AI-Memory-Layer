@@ -1,0 +1,10 @@
+.gitignore for AI-Memory-Layer
+
+Python bytecode
+pycache/ *.pyc *.pyo *.pyd
+
+Virtual environments
+venv/ .env/ ENV/ .virtualenv/
+
+Mac
+.DS_Store Thumbs.db
