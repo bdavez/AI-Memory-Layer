@@ -10,17 +10,17 @@ This is a memory layer written in python, it connects to worker agents then will
 
 ### This uses python both pip and python are required to be installed first
 
-#### Enter you GitHub Repo Folder ->
+#### Enter you GitHub Repo Folder
 cd ~/AI-Memory-Layer
 
-#### [Create venv] ->
+#### [Create venv]
 python3 -m venv venv
 
-#### [Activate venv] ->
+#### [Activate venv]
 source venv/bin/activate
 
-#### [install requirements] ->
+#### [install requirements]
 pip install -r requirements.txt
 
-#### [run server] ->
+#### [run server]
 python3 -m backend.server
