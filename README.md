@@ -27,4 +27,11 @@ python3 -m backend.server
 
 ###Once the server is running it will display your IP address, web management interface is by default using port 8000. 
 
-#### EXAMPLE - So to access Web Chat interface, the following URL "IPADDRESS:PORT/code-assistant.html" would be used. Ensure it matches up with client that is running the agent python script as well as running ollama and has models downloaded, or Web Chat will remain unpopulated. 
+#### EXAMPLE - So to access Web Chat interface, the following URL "IPADDRESS:PORT/code-assistant.html" or "IPADDRESS:PORT/memory-debug.html" would be used. Ensure it matches up with client that is running the agent python script as well as running ollama and has models downloaded, or Web Chat will remain unpopulated. 
+
+>[
+> Next 
+> ->> user authentication for profile use
+> ->> Deduping Memory Facts 
+> ->> Suggested Memory Keywords depending on the profiles())
+>]
