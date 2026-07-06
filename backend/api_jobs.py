@@ -197,16 +197,26 @@ def api_assistant_run():
         "assigned_machine": "uno",
     }
 
+    # ⭐ FIX: use worker IP instead of hostname
     worker_info = heartbeat_registry.get("uno")
+    if not worker_info:
+        return Response("event: error\ndata: Worker 'uno' not found\n\n", mimetype="text/event-stream")
+
     worker_ip = worker_info.get("primary_ip")
     worker_port = worker_info.get("agent_port", 9000)
+
+    if not worker_ip:
+        return Response("event: error\ndata: Worker IP missing\n\n", mimetype="text/event-stream")
 
     url = f"http://{worker_ip}:{worker_port}/agent/jobs/{job_id}/run"
 
     def stream():
-        r = requests.post(url, json=job, stream=True)
-        for chunk in r.iter_content(chunk_size=None):
-            if chunk:
-                yield chunk
+        try:
+            r = requests.post(url, json=job, stream=True)
+            for chunk in r.iter_content(chunk_size=None):
+                if chunk:
+                    yield chunk
+        except Exception as e:
+            yield f"event: error\ndata: {str(e)}\n\n"
 
     return Response(stream(), mimetype="text/event-stream")
