@@ -20,11 +20,14 @@ bp = Blueprint("jobs", __name__, url_prefix="/api/jobs")
 logger = logging.getLogger(__name__)
 
 
+# ---------------------------------------------------------
+# Create Job
+# ---------------------------------------------------------
 @bp.route("", methods=["POST"])
 def api_create_job():
     data = request.get_json(force=True) or {}
     job_type = data.get("type")
-    model = data.get("model", "")  # compiler may not need a model
+    model = data.get("model", "")
     job_input = data.get("input") or {}
 
     if not job_type:
@@ -38,6 +41,9 @@ def api_create_job():
         return jsonify({"error": str(e)}), 500
 
 
+# ---------------------------------------------------------
+# Get Job
+# ---------------------------------------------------------
 @bp.route("/<job_id>", methods=["GET"])
 def api_get_job(job_id):
     job = get_job(job_id)
@@ -46,6 +52,9 @@ def api_get_job(job_id):
     return jsonify(job), 200
 
 
+# ---------------------------------------------------------
+# Job Lists
+# ---------------------------------------------------------
 @bp.route("/pending", methods=["GET"])
 def api_pending():
     groups = list_jobs_grouped()
@@ -72,18 +81,15 @@ def api_failed():
 
 @bp.route("/all", methods=["GET"])
 def api_all_jobs():
-    """
-    Return all jobs grouped by status.
-    """
     groups = list_jobs_grouped()
     return jsonify(groups), 200
 
 
+# ---------------------------------------------------------
+# Refresh Jobs
+# ---------------------------------------------------------
 @bp.route("/refresh-all", methods=["GET"])
 def api_refresh_all():
-    """
-    Refresh all jobs from workers and return grouped view.
-    """
     refresh_all_jobs()
     groups = list_jobs_grouped()
     return jsonify(groups), 200
@@ -97,20 +103,24 @@ def api_refresh_job(job_id):
     return jsonify(job), 200
 
 
+# ---------------------------------------------------------
+# Job Progress
+# ---------------------------------------------------------
 @bp.route("/<job_id>/progress", methods=["GET"])
 def api_job_progress(job_id):
     job = get_job(job_id)
     if not job:
         return jsonify({"error": "not found"}), 404
-    return jsonify(
-        {
-            "id": job["id"],
-            "status": job.get("status"),
-            "progress": job.get("progress"),
-        }
-    ), 200
+    return jsonify({
+        "id": job["id"],
+        "status": job.get("status"),
+        "progress": job.get("progress"),
+    }), 200
 
 
+# ---------------------------------------------------------
+# Job Metadata
+# ---------------------------------------------------------
 @bp.route("/<job_id>/metadata", methods=["GET"])
 def api_job_metadata(job_id):
     job = get_job(job_id)
@@ -133,6 +143,9 @@ def api_job_metadata(job_id):
     return jsonify(meta), 200
 
 
+# ---------------------------------------------------------
+# Cancel / Retry
+# ---------------------------------------------------------
 @bp.route("/<job_id>/cancel", methods=["POST"])
 def api_cancel(job_id):
     try:
@@ -151,11 +164,11 @@ def api_retry(job_id):
         return jsonify({"error": str(e)}), 400
 
 
+# ---------------------------------------------------------
+# Stream Job Output (Proxy)
+# ---------------------------------------------------------
 @bp.route("/<job_id>/stream", methods=["GET"])
 def api_stream(job_id):
-    """
-    Proxy SSE stream from worker /agent/jobs/<id>/stream to the UI.
-    """
     job = get_job(job_id)
     if not job:
         return jsonify({"error": "not found"}), 404
@@ -180,9 +193,12 @@ def api_stream(job_id):
 
     return Response(proxy_stream(), mimetype="text/event-stream")
 
+
+# ---------------------------------------------------------
+# Assistant Inference Endpoint (SSE)
+# ---------------------------------------------------------
 @bp.route("/assistant/run", methods=["GET"])
 def api_assistant_run():
-    import uuid
     from .state import heartbeat_registry
 
     model = request.args.get("model")
@@ -197,16 +213,18 @@ def api_assistant_run():
         "assigned_machine": "uno",
     }
 
-    # ⭐ FIX: use worker IP instead of hostname
+    # Lookup worker info
     worker_info = heartbeat_registry.get("uno")
     if not worker_info:
-        return Response("event: error\ndata: Worker 'uno' not found\n\n", mimetype="text/event-stream")
+        return Response("event: error\ndata: Worker 'uno' not found\n\n",
+                        mimetype="text/event-stream")
 
     worker_ip = worker_info.get("primary_ip")
     worker_port = worker_info.get("agent_port", 9000)
 
     if not worker_ip:
-        return Response("event: error\ndata: Worker IP missing\n\n", mimetype="text/event-stream")
+        return Response("event: error\ndata: Worker IP missing\n\n",
+                        mimetype="text/event-stream")
 
     url = f"http://{worker_ip}:{worker_port}/agent/jobs/{job_id}/run"
 
