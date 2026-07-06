@@ -180,40 +180,33 @@ def api_stream(job_id):
 
     return Response(proxy_stream(), mimetype="text/event-stream")
 
-async function runAssistant() {
-  const userId = $("ca-user").value;
-  const model = $("ca-model").value;
-  const mode = $("ca-mode").value;
-  const prompt = $("ca-prompt").value.trim();
+@bp.route("/assistant/run", methods=["GET"])
+def api_assistant_run():
+    import uuid
+    from .state import heartbeat_registry
 
-  if (!prompt) {
-    setStatus("Prompt is empty.");
-    return;
-  }
+    model = request.args.get("model")
+    prompt = request.args.get("prompt")
 
-  setStatus("Running…");
-  setOutput("");
+    job_id = str(uuid.uuid4())
 
-  const params = new URLSearchParams({
-    model,
-    prompt,
-    user_id: userId,
-    mode
-  });
+    job = {
+        "id": job_id,
+        "model": model,
+        "prompt": prompt,
+        "assigned_machine": "uno",
+    }
 
-  const evtSource = new EventSource(`/api/jobs/assistant/run?${params.toString()}`);
+    worker_info = heartbeat_registry.get("uno")
+    worker_ip = worker_info.get("primary_ip")
+    worker_port = worker_info.get("agent_port", 9000)
 
-  evtSource.onmessage = (e) => {
-    $("ca-output").textContent += e.data + "\n";
-  };
+    url = f"http://{worker_ip}:{worker_port}/agent/jobs/{job_id}/run"
 
-  evtSource.addEventListener("done", () => {
-    setStatus("Done.");
-    evtSource.close();
-  });
+    def stream():
+        r = requests.post(url, json=job, stream=True)
+        for chunk in r.iter_content(chunk_size=None):
+            if chunk:
+                yield chunk
 
-  evtSource.onerror = () => {
-    setStatus("Error.");
-    evtSource.close();
-  };
-}
+    return Response(stream(), mimetype="text/event-stream")
