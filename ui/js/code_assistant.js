@@ -82,11 +82,12 @@ async function runAssistant() {
     evtSource.close();
   });
 
-  evtSource.onerror = () => {
-     console.error("SSE error:", err);
+  evtSource.onerror = (e) => {
+    console.error("SSE error:", e);
     setStatus("Error.");
     evtSource.close();
   };
+
 }
 
 
