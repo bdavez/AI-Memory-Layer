@@ -40,10 +40,16 @@ async function loadUsers() {
 // Run Code Assistant
 // ---------------------------------------------------------
 async function runAssistant() {
+  console.log("runAssistant() called");
   const userId = $("ca-user").value;
   const model = $("ca-model").value;
   const mode = $("ca-mode").value;
   const prompt = $("ca-prompt").value.trim();
+
+  console.log("model =", model);
+  console.log("prompt =", prompt);
+
+
 
   if (!prompt) {
     setStatus("Prompt is empty.");
@@ -60,18 +66,24 @@ async function runAssistant() {
     mode
   });
 
+  const url = `/api/jobs/assistant/run?model=${model}&prompt=${encodeURIComponent(prompt)}`;
+  console.log("EventSource URL =", url);
+
   const evtSource = new EventSource(`/api/jobs/assistant/run?model=${model}&prompt=${encodeURIComponent(prompt)}`);
 
   evtSource.onmessage = (e) => {
+    console.log("SSE message:", e.data);
     $("ca-output").textContent += e.data + "\n";
   };
 
   evtSource.addEventListener("done", () => {
+     console.log("SSE done event");
     setStatus("Done.");
     evtSource.close();
   });
 
   evtSource.onerror = () => {
+     console.error("SSE error:", err);
     setStatus("Error.");
     evtSource.close();
   };
