@@ -52,7 +52,7 @@ function machineCard(machine) {
     <div class="machine-card ${machine.alive ? "alive" : "dead"}">
       <div class="machine-header">
         <span class="machine-name">${machine.name}</span>
-        <span class="machine-role">${(machine.role || []).join(", ")}</span>
+        <span class="machine-role">${machine.role || "unknown"}</span>
       </div>
 
       <div class="machine-stats">
@@ -121,7 +121,7 @@ function populateMachineDropdown(machines) {
   machines.forEach((m) => {
     const opt = document.createElement("option");
     opt.value = m.name;
-    opt.textContent = `${m.name} (${(m.role || []).join(", ")})`;
+    opt.textContent = `${m.name} (${(m.role || "unknown")})`;
     machineSelect.appendChild(opt);
   });
 }
