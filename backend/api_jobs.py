@@ -180,25 +180,26 @@ def api_stream(job_id):
 
     return Response(proxy_stream(), mimetype="text/event-stream")
 
-@bp.route("/api/assistant/run", methods=["POST"])
+@bp.route("/assistant/run", methods=["POST"])
 def api_assistant_run():
     payload = request.get_json(force=True)
     model = payload.get("model")
     prompt = payload.get("prompt")
 
-    # Create a job
+    job_id = str(uuid.uuid4())
+
     job = {
-        "id": str(uuid.uuid4()),
+        "id": job_id,
         "model": model,
         "prompt": prompt,
         "assigned_machine": "uno",
     }
 
-    # Stream from worker
     def stream():
-        url = f"http://uno:9000/agent/jobs/{job['id']}/run"
+        url = f"http://uno:9000/agent/jobs/{job_id}/run"
         r = requests.post(url, json=job, stream=True)
         for chunk in r.iter_content(chunk_size=None):
-            yield chunk
+            if chunk:
+                yield chunk
 
     return Response(stream(), mimetype="text/event-stream")

@@ -60,7 +60,8 @@ async function runAssistant() {
     mode
   });
 
-  const evtSource = new EventSource(`/api/assistant/run?${params.toString()}`);
+  const evtSource = new EventSource(`/api/jobs/assistant/run?${params.toString()}`);
+
 
   evtSource.onmessage = (e) => {
     $("ca-output").textContent += e.data + "\n";
