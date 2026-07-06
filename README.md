@@ -8,7 +8,7 @@ This is a memory layer written in python, it connects to worker agents then will
 
 *** I will update the README after I finish incorporating the deduping process, then create an official package for worker agent and control plane / scheduler system. The keyword and memory fact display system is fully working, heartbeat status updates are fully connected to API however may need to check backend as some values changes since revision 4 if graphs are not updating. Please note this is just a fun hobby project I'm temporarily holding here until an official build/release. Some files here are deprecated, while others are being finished built out. If your interested in the official release please wait and look towards the releases section for an official beta / alpha.***
 
-### This uses both pip and python are required to be installed first
+### Both pip and python are required to be installed first
 
 #### Enter you GitHub Repo Folder
 cd ~/AI-Memory-Layer
@@ -25,7 +25,7 @@ pip install -r requirements.txt
 #### [run server]
 python3 -m backend.server
 
-###Once the server is running it will display your IP address, web management interface is by default using port 8000. 
+### Once the server is running it will display your IP address, web management interface is by default using port 8000. 
 
 #### EXAMPLE - So to access Web Chat interface, the following URL would be "IPADDRESS:PORT" or "IPADDRESS:PORT/code-assistant.html" or "IPADDRESS:PORT/memory-debug.html" would be used. Ensure it matches up with client that is running the agent python script as well as running ollama and has models downloaded, or Web Chat will remain unpopulated. 
 
