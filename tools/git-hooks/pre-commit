@@ -1,0 +1,25 @@
+#!/bin/bash
+
+BAD_PATTERNS=(
+    "edge_all_open_tabs"
+    "WebsiteContent_"
+    "User's Edge browser tabs metadata"
+)
+
+FILES=$(git diff --cached --name-only)
+
+for FILE in $FILES; do
+    if file "$FILE" | grep -qE 'text|ASCII'; then
+        for PATTERN in "${BAD_PATTERNS[@]}"; do
+            if grep -q "$PATTERN" "$FILE"; then
+                echo "❌ ERROR: Copilot metadata detected in $FILE"
+                echo "    Pattern: $PATTERN"
+                echo "    Commit aborted."
+                exit 1
+            fi
+        done
+    fi
+done
+
+echo "✔ Pre-commit check passed."
+exit 0

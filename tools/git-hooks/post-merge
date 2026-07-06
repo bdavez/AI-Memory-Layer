@@ -1,0 +1,34 @@
+#!/bin/bash
+
+echo "🔍 Running post-merge metadata scan..."
+
+BAD_PATTERNS=(
+    "edge_all_open_tabs"
+    "WebsiteContent_"
+    "User's Edge browser tabs metadata"
+)
+
+FILES=$(git ls-files)
+
+FOUND=false
+
+for FILE in $FILES; do
+    if file "$FILE" | grep -qE 'text|ASCII'; then
+        for PATTERN in "${BAD_PATTERNS[@]}"; do
+            if grep -q "$PATTERN" "$FILE"; then
+                echo "❌ WARNING: Copilot metadata detected in $FILE"
+                echo "    Pattern: $PATTERN"
+                FOUND=true
+            fi
+        done
+    fi
+done
+
+if [ "$FOUND" = true ]; then
+    echo ""
+    echo "⚠️ ACTION REQUIRED:"
+    echo "    Remove the metadata from the affected files."
+    echo ""
+else
+    echo "✔ No metadata found. Merge clean."
+fi
