@@ -1,10 +1,17 @@
 #!/bin/bash
 
-BAD_PATTERNS=(
-    "edge_all_open_tabs"
-    "WebsiteContent_"
-    "User's Edge browser tabs metadata"
+# Base64‑encoded patterns to avoid self‑matching
+ENCODED_PATTERNS=(
+    "ZWRnZV9hbGxfb3Blbl90YWJz"          # edge_all_open_tabs
+    "V2Vic2l0ZUNvbnRlbnRf"              # WebsiteContent_
+    "VXNlcidzIEVkZ2UgYnJvd3NlciB0YWJzIG1ldGFkYXRh"  # User's Edge browser tabs metadata
 )
+
+# Decode patterns at runtime
+BAD_PATTERNS=()
+for EP in "${ENCODED_PATTERNS[@]}"; do
+    BAD_PATTERNS+=("$(echo "$EP" | base64 --decode)")
+done
 
 FILES=$(git diff --cached --name-only)
 

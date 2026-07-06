@@ -2,11 +2,16 @@
 
 echo "🔍 Running post-merge metadata scan..."
 
-BAD_PATTERNS=(
-    "edge_all_open_tabs"
-    "WebsiteContent_"
-    "User's Edge browser tabs metadata"
+ENCODED_PATTERNS=(
+    "ZWRnZV9hbGxfb3Blbl90YWJz"
+    "V2Vic2l0ZUNvbnRlbnRf"
+    "VXNlcidzIEVkZ2UgYnJvd3NlciB0YWJzIG1ldGFkYXRh"
 )
+
+BAD_PATTERNS=()
+for EP in "${ENCODED_PATTERNS[@]}"; do
+    BAD_PATTERNS+=("$(echo "$EP" | base64 --decode)")
+done
 
 FILES=$(git ls-files)
 
