@@ -180,21 +180,17 @@ def api_stream(job_id):
 
     return Response(proxy_stream(), mimetype="text/event-stream")
 
-@bp.route("/assistant/run", methods=["GET", "POST"])
+@bp.route("/assistant/run", methods=["GET"])
 def api_assistant_run():
     import uuid
     from .state import heartbeat_registry
 
-    if request.method == "POST":
-        payload = request.get_json(force=True)
-        model = payload.get("model")
-        prompt = payload.get("prompt")
-    else:
-        model = request.args.get("model")
-        prompt = request.args.get("prompt")
+    model = request.args.get("model")
+    prompt = request.args.get("prompt")
 
     job_id = str(uuid.uuid4())
 
+    # Build job object
     job = {
         "id": job_id,
         "model": model,
@@ -202,15 +198,26 @@ def api_assistant_run():
         "assigned_machine": "uno",
     }
 
-    # ⭐ FIX: use worker IP instead of hostname
-    worker_ip = heartbeat_registry["uno"]["primary_ip"]
-    worker_port = heartbeat_registry["uno"].get("agent_port", 9000)
+    # ⭐ FIX: Use worker IP instead of hostname
+    worker_info = heartbeat_registry.get("uno")
+    if not worker_info:
+        return Response("event: error\ndata: Worker 'uno' not found\n\n", mimetype="text/event-stream")
+
+    worker_ip = worker_info.get("primary_ip")
+    worker_port = worker_info.get("agent_port", 9000)
+
+    if not worker_ip:
+        return Response("event: error\ndata: Worker IP missing\n\n", mimetype="text/event-stream")
+
     url = f"http://{worker_ip}:{worker_port}/agent/jobs/{job_id}/run"
 
     def stream():
-        r = requests.post(url, json=job, stream=True)
-        for chunk in r.iter_content(chunk_size=None):
-            if chunk:
-                yield chunk
+        try:
+            r = requests.post(url, json=job, stream=True)
+            for chunk in r.iter_content(chunk_size=None):
+                if chunk:
+                    yield chunk
+        except Exception as e:
+            yield f"event: error\ndata: {str(e)}\n\n"
 
     return Response(stream(), mimetype="text/event-stream")
