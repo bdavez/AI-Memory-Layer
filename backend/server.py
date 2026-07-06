@@ -25,6 +25,8 @@ from .api_memory import bp as memory_bp
 from .api_models import bp as models_bp
 from .api_state import bp as state_api_bp
 from .api_assistant import bp as assistant_bp
+from .api_models_live import bp as models_live_bp
+app.register_blueprint(models_live_bp)
 app.register_blueprint(state_api_bp)
 # Register blueprints
 app.register_blueprint(jobs_bp)
