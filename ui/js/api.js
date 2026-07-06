@@ -24,6 +24,11 @@ export async function postJSON(url, data) {
   return await resp.json();
 }
 
+export async function apiGetModelsLive() {
+  const r = await fetch("/api/models/live");
+  return await r.json();
+}
+
 export async function apiMemoryCreateUser(userId) {
   return postJSON("/api/memory/user/create", { user_id: userId });
 }

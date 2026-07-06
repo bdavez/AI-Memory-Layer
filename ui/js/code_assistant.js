@@ -2,6 +2,7 @@
 // Multi-user Code Assistant with model selection, diff mode, and neon UI.
 
 import { getJSON, postJSON } from "./api.js";
+import { apiGetModelsLive } from "./api.js";
 
 // ---------------------------------------------------------
 // DOM Helpers
@@ -35,31 +36,6 @@ async function loadUsers() {
   return users[0] || null;
 }
 
-// ---------------------------------------------------------
-// Load Models
-// ---------------------------------------------------------
-async function loadModels() {
-  const res = await getJSON("/api/models");
-
-  // Accept both { models: [...] } and [...]
-  const models = Array.isArray(res) ? res : res.models;
-
-  if (!Array.isArray(models)) {
-    console.error("Invalid /api/models response:", res);
-    setStatus("Model list unavailable.");
-    return;
-  }
-
-  const sel = $("ca-model");
-  sel.innerHTML = "";
-
-  models.forEach((m) => {
-    const opt = document.createElement("option");
-    opt.value = m;
-    opt.textContent = m;
-    sel.appendChild(opt);
-  });
-}
 // ---------------------------------------------------------
 // Run Code Assistant
 // ---------------------------------------------------------
@@ -101,6 +77,34 @@ function clearOutput() {
   $("ca-prompt").value = "";
   setStatus("Cleared.");
 }
+// ---------------------------------------------------------
+// Refresh Model Dropdown
+// ---------------------------------------------------------
+async function refreshModelDropdown() {
+  const data = await apiGetModelsLive();
+
+  // For now, pick uno
+  const models = data["uno"] || [];
+
+  const select = document.getElementById("ca-model");
+  select.innerHTML = "";
+
+  models.forEach((m) => {
+    const opt = document.createElement("option");
+    opt.value = m;
+    opt.textContent = m;
+    select.appendChild(opt);
+  });
+
+  document.getElementById("ca-status").textContent =
+    `Loaded ${models.length} model(s) from uno.`;
+}
+
+document.getElementById("ca-refresh-models")
+  .addEventListener("click", refreshModelDropdown);
+
+window.addEventListener("DOMContentLoaded", refreshModelDropdown);
+
 
 // ---------------------------------------------------------
 // Init
@@ -112,15 +116,12 @@ async function init() {
   const firstUser = await loadUsers();
   if (firstUser) $("ca-user").value = firstUser;
 
-  // Load models
-  await loadModels();
-
   // Wire buttons
   $("ca-run").onclick = runAssistant;
   $("ca-clear").onclick = clearOutput;
-  $("ca-refresh-models").onclick = loadModels;
 
   setStatus("Ready.");
 }
 
 window.addEventListener("DOMContentLoaded", init);
+
