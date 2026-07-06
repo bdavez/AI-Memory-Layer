@@ -41,14 +41,18 @@ def get_gpu_stats():
 
 
 def get_ollama_models():
-    """
-    Parse plain-text output from `ollama list`.
-    """
     try:
         output = subprocess.check_output(["ollama", "list"]).decode("utf-8")
         lines = [l.strip() for l in output.splitlines() if l.strip()]
-        models = [line.split()[0] for line in lines]
+
+        models = []
+        for line in lines:
+            if line.startswith("NAME"):  # skip header
+                continue
+            models.append(line.split()[0])
+
         return models
+
     except Exception:
         return []
 
@@ -91,7 +95,7 @@ class WorkerAgent:
             print(f"[heartbeat] failed: {e}")
 
     def loop(self):
-        print(f"[workerV4] running as {self.hostname}")
+        print(f"[workerV5] running as {self.hostname}")
         while True:
             self.send_heartbeat()
             time.sleep(HEARTBEAT_INTERVAL)
