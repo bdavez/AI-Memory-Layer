@@ -180,7 +180,7 @@ def api_stream(job_id):
 
     return Response(proxy_stream(), mimetype="text/event-stream")
 
-@app.route("/api/assistant/run", methods=["POST"])
+@bp.route("/api/assistant/run", methods=["POST"])
 def api_assistant_run():
     payload = request.get_json(force=True)
     model = payload.get("model")
