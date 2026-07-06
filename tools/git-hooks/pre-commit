@@ -2,9 +2,9 @@
 
 # Base64‑encoded patterns to avoid self‑matching
 ENCODED_PATTERNS=(
-    "ZWRnZV9hbGxfb3Blbl90YWJz"          # edge_all_open_tabs
-    "V2Vic2l0ZUNvbnRlbnRf"              # WebsiteContent_
-    "VXNlcidzIEVkZ2UgYnJvd3NlciB0YWJzIG1ldGFkYXRh"  # User's Edge browser tabs metadata
+    "ZWRnZV9hbGxfb3Blbl90YWJz"          
+    "V2Vic2l0ZUNvbnRlbnRf"              
+    "VXNlcidzIEVkZ2UgYnJvd3NlciB0YWJzIG1ldGFkYXRh"  
 )
 
 # Decode patterns at runtime
