@@ -183,6 +183,7 @@ def api_stream(job_id):
 @bp.route("/assistant/run", methods=["GET", "POST"])
 def api_assistant_run():
     import uuid
+    from .state import heartbeat_registry
 
     if request.method == "POST":
         payload = request.get_json(force=True)
@@ -201,12 +202,15 @@ def api_assistant_run():
         "assigned_machine": "uno",
     }
 
+    # ⭐ FIX: use worker IP instead of hostname
+    worker_ip = heartbeat_registry["uno"]["primary_ip"]
+    worker_port = heartbeat_registry["uno"].get("agent_port", 9000)
+    url = f"http://{worker_ip}:{worker_port}/agent/jobs/{job_id}/run"
+
     def stream():
-        url = f"http://uno:9000/agent/jobs/{job_id}/run"
         r = requests.post(url, json=job, stream=True)
         for chunk in r.iter_content(chunk_size=None):
             if chunk:
                 yield chunk
 
     return Response(stream(), mimetype="text/event-stream")
-
