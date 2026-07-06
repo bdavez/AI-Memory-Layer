@@ -5,4 +5,4 @@ This repository includes Git hooks that prevent accidental contamination from Co
 ### Install hooks:
 
 ```bash
-bash tools/install-hooks.sh
+bash tools/git-hooks/install-hooks.sh
