@@ -51,23 +51,32 @@ async function runAssistant() {
   }
 
   setStatus("Running…");
+  setOutput("");
 
-  try {
-    const result = await postJSON("/api/assistant/run", {
-      user_id: userId,
-      model,
-      mode,
-      prompt,
-    });
+  const params = new URLSearchParams({
+    model,
+    prompt,
+    user_id: userId,
+    mode
+  });
 
-    setOutput(result.output || "(no output)");
+  const evtSource = new EventSource(`/api/assistant/run?${params.toString()}`);
+
+  evtSource.onmessage = (e) => {
+    $("ca-output").textContent += e.data + "\n";
+  };
+
+  evtSource.addEventListener("done", () => {
     setStatus("Done.");
-  } catch (err) {
-    console.error("Assistant error:", err);
-    setOutput("Error running assistant.");
+    evtSource.close();
+  });
+
+  evtSource.onerror = () => {
     setStatus("Error.");
-  }
+    evtSource.close();
+  };
 }
+
 
 // ---------------------------------------------------------
 // Clear Output

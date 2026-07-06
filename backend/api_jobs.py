@@ -3,6 +3,7 @@
 from flask import Blueprint, request, jsonify, Response
 import logging
 import requests
+import uuid
 
 from .jobs_core import (
     create_job,
@@ -178,3 +179,26 @@ def api_stream(job_id):
             yield "event: done\ndata: {}\n\n"
 
     return Response(proxy_stream(), mimetype="text/event-stream")
+
+@app.route("/api/assistant/run", methods=["POST"])
+def api_assistant_run():
+    payload = request.get_json(force=True)
+    model = payload.get("model")
+    prompt = payload.get("prompt")
+
+    # Create a job
+    job = {
+        "id": str(uuid.uuid4()),
+        "model": model,
+        "prompt": prompt,
+        "assigned_machine": "uno",
+    }
+
+    # Stream from worker
+    def stream():
+        url = f"http://uno:9000/agent/jobs/{job['id']}/run"
+        r = requests.post(url, json=job, stream=True)
+        for chunk in r.iter_content(chunk_size=None):
+            yield chunk
+
+    return Response(stream(), mimetype="text/event-stream")
