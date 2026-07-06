@@ -79,4 +79,3 @@ def run_compiler_job():
         pass
 
     return result
-
