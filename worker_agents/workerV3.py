@@ -3,17 +3,12 @@ import socket
 import subprocess
 import requests
 import psutil
-import json
 
 BACKEND_BASE_URL = "http://192.168.50.202:8000"
-HEARTBEAT_INTERVAL = 5  # seconds
+HEARTBEAT_INTERVAL = 5
 
 
 def get_gpu_stats():
-    """
-    Returns a list of GPU metric dicts using nvidia-smi.
-    Works with your VM passthrough RTX 2070 SUPER.
-    """
     try:
         cmd = [
             "nvidia-smi",
@@ -47,24 +42,15 @@ def get_gpu_stats():
 
 def get_ollama_models():
     """
-    Returns a list of model names from ollama, if available.
+    Parse plain-text output from `ollama list`.
     """
     try:
-        # ollama list --json is supported in recent versions
-        output = subprocess.check_output(["ollama", "list", "--json"]).decode("utf-8")
-        data = json.loads(output)
-        models = [m.get("name") for m in data if m.get("name")]
+        output = subprocess.check_output(["ollama", "list"]).decode("utf-8")
+        lines = [l.strip() for l in output.splitlines() if l.strip()]
+        models = [line.split()[0] for line in lines]
         return models
     except Exception:
-        # Fallback: plain text parsing
-        try:
-            output = subprocess.check_output(["ollama", "list"]).decode("utf-8")
-            lines = [l.strip() for l in output.splitlines() if l.strip()]
-            # First column is usually the model name
-            models = [line.split()[0] for line in lines if line]
-            return models
-        except Exception:
-            return []
+        return []
 
 
 def get_system_stats():
@@ -86,36 +72,33 @@ class WorkerAgent:
         stats = get_system_stats()
 
         payload = {
-            "name": stats["hostname"],     # REQUIRED by update_heartbeat()
+            "name": stats["hostname"],
             "role": "worker",
             "timestamp": time.strftime("%Y-%m-%dT%H:%M:%S"),
             "cpu": stats["cpu"],
             "ram": stats["ram"],
             "gpus": stats["gpus"],
+            "models": stats["models"],
             "busy": False,
             "task": None,
-            # models list for Code Assistant / routing
-            "models": stats["models"],
         }
 
         try:
             r = self.session.post(f"{BACKEND_BASE_URL}/heartbeat", json=payload, timeout=5)
             r.raise_for_status()
-            print(f"[heartbeat] sent for {self.hostname} | models={len(stats['models'])} gpus={len(stats['gpus'])}")
+            print(f"[heartbeat] uno | cpu={stats['cpu']} ram={stats['ram']} gpus={len(stats['gpus'])} models={stats['models']}")
         except Exception as e:
             print(f"[heartbeat] failed: {e}")
 
     def loop(self):
-        print(f"[workerV3] starting heartbeat loop as {self.hostname}")
-
+        print(f"[workerV4] running as {self.hostname}")
         while True:
             self.send_heartbeat()
             time.sleep(HEARTBEAT_INTERVAL)
 
 
 def main():
-    agent = WorkerAgent()
-    agent.loop()
+    WorkerAgent().loop()
 
 
 if __name__ == "__main__":
