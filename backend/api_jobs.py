@@ -180,11 +180,17 @@ def api_stream(job_id):
 
     return Response(proxy_stream(), mimetype="text/event-stream")
 
-@bp.route("/assistant/run", methods=["POST"])
+@bp.route("/assistant/run", methods=["GET", "POST"])
 def api_assistant_run():
-    payload = request.get_json(force=True)
-    model = payload.get("model")
-    prompt = payload.get("prompt")
+    import uuid
+
+    if request.method == "POST":
+        payload = request.get_json(force=True)
+        model = payload.get("model")
+        prompt = payload.get("prompt")
+    else:
+        model = request.args.get("model")
+        prompt = request.args.get("prompt")
 
     job_id = str(uuid.uuid4())
 
@@ -203,3 +209,4 @@ def api_assistant_run():
                 yield chunk
 
     return Response(stream(), mimetype="text/event-stream")
+
