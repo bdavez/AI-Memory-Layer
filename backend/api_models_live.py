@@ -1,5 +1,5 @@
 from flask import Blueprint, jsonify
-from .server import heartbeat_registry
+from .state import heartbeat_registry
 
 bp = Blueprint("models_live", __name__, url_prefix="/api/models")
 

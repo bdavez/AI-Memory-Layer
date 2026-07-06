@@ -45,7 +45,7 @@ from .canonical_model import load_canonical_state as load_canonical_model
 HEARTBEAT_TIMEOUT_SEC = 30
 HEARTBEAT_STALE_SEC = 10
 
-heartbeat_registry = {}
+from .state import heartbeat_registry
 
 from .jobs_core import register_heartbeat_provider
 register_heartbeat_provider(lambda: heartbeat_registry)
