@@ -87,7 +87,7 @@ async function runAssistant() {
 
   evtSource.onmessage = (e) => {
     console.log("SSE message:", e.data + "\r\n");
-    term.write(e.data);
+    term.write(e.data + "\r\n");
     $("ca-output").textContent += e.data + "\n";
     
   };
