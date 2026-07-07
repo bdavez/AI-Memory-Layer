@@ -3,6 +3,19 @@
 
 import { getJSON, postJSON } from "./api.js";
 import { apiGetModelsLive } from "./api.js";
+// Initialize terminal
+const term = new Terminal({
+    convertEol: true,
+    cursorBlink: true,
+    fontSize: 14,
+    theme: {
+        background: '#1e1e1e',
+        foreground: '#ffffff'
+    }
+});
+
+// Attach terminal to the HTML container
+term.open(document.getElementById('terminal'));
 
 // ---------------------------------------------------------
 // DOM Helpers
@@ -41,6 +54,7 @@ async function loadUsers() {
 // ---------------------------------------------------------
 async function runAssistant() {
   console.log("runAssistant() called");
+
   const userId = $("ca-user").value;
   const model = $("ca-model").value;
   const mode = $("ca-mode").value;
@@ -72,8 +86,9 @@ async function runAssistant() {
   const evtSource = new EventSource(`/api/jobs/assistant/run?model=${model}&prompt=${encodeURIComponent(prompt)}`);
 
   evtSource.onmessage = (e) => {
-    console.log("SSE message:", e.data);
-    $("ca-output").textContent += e.data + "\n";
+    console.log("SSE message:", e.data + "\r\n");
+    term.write(e.data);
+    
   };
 
   evtSource.addEventListener("done", () => {
