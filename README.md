@@ -1,3 +1,9 @@
+# ETHICAL USE NOTICE
+
+This project is intended for educational and professional demonstration purposes only.
+It must not be used for surveillance, harassment, automated decision-making about individuals,
+or any harmful or unethical applications.
+
 # AI MEMORY LAYER FOR A CONTROL PLANE
 Not just an LLM memory engine — but a memory system that:
 
@@ -14,8 +20,6 @@ Written in python, then extended out to JavaScript with Flask for a Web Managmen
 I was extremely hesitant to release some of my prototype files for this project, however I do see the advantages in this setup for my home lab. So I wanted to push it under GNU GPL and have some fun with it.
 
 This is a memory layer written in python, it connects to worker agents then will inject a distilled memory prompt before processing agent input. Already connected to web interface "code-assistant.html". This operates off the principal of keywords while incorporating a deduping process.
-
-*** I will update the README after I finish incorporating the deduping process, then create an official package for worker agent and control plane / scheduler system. The keyword and memory fact display system is fully working, heartbeat status updates are fully connected to API however may need to check backend as some values changes since revision 4 if graphs are not updating. Please note this is just a fun hobby project I'm temporarily holding here until an official build/release.***
 
 ![Homepage](img/homescreen.png)
 ![Agent Chat](img/code-assistant.png)
