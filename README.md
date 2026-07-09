@@ -1,4 +1,13 @@
 # AI MEMORY LAYER FOR A CONTROL PLANE
+Not just an LLM memory engine — but a memory system that:
+
+> integrates with worker agents
+
+> injects distilled memory prompts
+
+> tracks heartbeats
+
+> exposes a web UI that is part of a mini AI datacenter architecture
 
 Written in python, then extended out to JavaScript with Flask for a Web Managment Interface. 
 
