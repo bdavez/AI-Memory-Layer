@@ -52,5 +52,9 @@ python3 -m backend.server
 
 ### Then connect a worker agent, ensure both agent_server and worker script are running on the machine with ollama installed. Also ensure an AI model is pulled with ollama, if everything is connected properly all downloaded AI models for ollama will appear in Code Assistant Model list. 
 
+### Acknowledgments
+<p> This project was created by Brendan Davis.
+Development was supported through iterative collaboration with Microsoft Copilot (Leah), used as an AI assistant for architectural guidance, code scaffolding, and documentation refinement. </p>
+
 <p> License updated from GNU GPL to Apache 2.0 on July 9, 2026.
 This change reflects the project's purpose as a portfolio demonstration rather than a production system. </p> 
