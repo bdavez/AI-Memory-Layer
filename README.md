@@ -51,3 +51,6 @@ python3 -m backend.server
 #### EXAMPLE - So to access Web Chat interface, the following URL would be "IPADDRESS:PORT" or "IPADDRESS:PORT/code-assistant.html" or "IPADDRESS:PORT/memory-debug.html" would be used. Ensure it matches up with client that is running the agent python script as well as running ollama and has models downloaded, or Web Chat will remain unpopulated. 
 
 ### Then connect a worker agent, ensure both agent_server and worker script are running on the machine with ollama installed. Also ensure an AI model is pulled with ollama, if everything is connected properly all downloaded AI models for ollama will appear in Code Assistant Model list. 
+
+<p> License updated from GNU GPL to Apache 2.0 on July 9, 2026.
+This change reflects the project's purpose as a portfolio demonstration rather than a production system. </p> 
