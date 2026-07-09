@@ -17,6 +17,10 @@ This is a memory layer written in python, it connects to worker agents then will
 
 *** I will update the README after I finish incorporating the deduping process, then create an official package for worker agent and control plane / scheduler system. The keyword and memory fact display system is fully working, heartbeat status updates are fully connected to API however may need to check backend as some values changes since revision 4 if graphs are not updating. Please note this is just a fun hobby project I'm temporarily holding here until an official build/release.***
 
+![Homepage](img/homescreen.png)
+![Agent Chat](img/code-assistant.png)
+![Memory Management](img/memory-debug.png)
+
 ### Both pip and python are required to be installed first
 
 #### Enter you GitHub Repo Folder
