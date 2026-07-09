@@ -31,9 +31,18 @@ python3 -m backend.server
 
 ### Then connect a worker agent, ensure both agent_server and worker script are running on the machine with ollama installed. Also ensure an AI model is pulled with ollama, if everything is connected properly all downloaded AI models for ollama will appear in Code Assistant Model list. 
 
->[
-> Next Implementations 
+Next Implementations:
+
+> ->> Implement ANSI Escape codes to chatbox in Web UI
+
+> ->> Implement Tensor Parallelism to incorperate multi GPU support for worker agent node scheduler
+
+> ->> Add Plotly or Matplotlib graphs to homescreen (ControlplaneIP:port/) - [index.html]
+
+> ->> incorperate automated counter/timer for processing memory facts && add a web UI for editing prompts containing automated distilled memory injection for AI model profile
+
 > ->> user authentication for profile use
+
 > ->> Deduping Memory Facts 
+
 > ->> Suggested Memory Keywords depending on the profiles(s)
->]
