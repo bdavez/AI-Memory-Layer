@@ -1,4 +1,10 @@
-Next Implementations:
+# Development Workflow
+This project originally used local git hooks for formatting and commit hygiene.
+These have been removed from the public release to keep the repository simple
+and focused on demonstrating architectural concepts.
+
+
+# Next Implementations:
 
 > ->> Implement ANSI Escape codes to chatbox in Web UI
 
