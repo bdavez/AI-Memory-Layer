@@ -1,64 +1,191 @@
-# AI Memory Layer — Public Release Mode
-A distributed AI memory system with worker agents, distilled prompts, heartbeat tracking,
-and a web-based control plane. This is a safe, sandboxed demonstration of the architecture.
+# **AI‑Memory‑Layer**  
+*A practical, modular, ANSI‑intelligent memory architecture for LLM agents and AI systems.*
 
-# DISCLAIMER
-This project is a prototype and demonstration of architectural concepts.
-It is not a production system and should not be used as one.
+---
 
-# ETHICAL USE NOTICE
-This project is intended for educational and professional demonstration purposes only.
-It must not be used for surveillance, harassment, automated decision-making about individuals,
-or any harmful or unethical applications.
+## 🌐 Overview  
+Modern LLMs are powerful — but they’re **stateless**. They forget everything the moment a conversation ends.  
+**AI‑Memory‑Layer** solves this by providing a structured, persistent, inspectable memory system that any AI agent can use to store, retrieve, visualize, and reason over long‑term facts.
 
-# AI MEMORY LAYER FOR A CONTROL PLANE
-Not just an LLM memory engine — but a memory system that:
+This project introduces:
 
-> integrates with worker agents
+- **Structured durable memory** for agents  
+- **ANSI‑intelligence** for terminal‑native visualization  
+- **Cognitive path tracing** to show *why* an AI made a decision  
+- **Memory-debug.html** for real‑time introspection  
+- **A modular architecture** designed to plug into any LLM workflow  
 
-> injects distilled memory prompts
+The private build is currently in active development. This public repo contains the project vision, architecture, roadmap, and example scaffolding.
 
-> tracks heartbeats
+---
 
-> exposes a web UI that is part of a mini AI datacenter architecture
+## 🧠 Why a Memory Layer  
+LLMs today operate like brilliant amnesiacs. They can reason, but they cannot *remember*.  
+This creates problems:
 
-Written in python, then extended out to JavaScript with Flask for a Web Managment Interface. 
+- No persistent identity  
+- No long-term learning  
+- No continuity across sessions  
+- No way to inspect internal reasoning  
+- No reproducible cognitive state  
 
-I was extremely hesitant to release some of my prototype files for this project, however I do see the advantages in this setup for my home lab. 
+**AI‑Memory‑Layer** provides the missing piece:  
+A durable, inspectable, agent‑friendly memory substrate.
 
-> This repository exists to demonstrate my ability to design and implement AI memory systems, structured fact storage, and terminal-aware interfaces. It is intentionally limited in scope to avoid misuse.
+---
 
+## 🔍 Key Concepts
+
+### **Structured Memory Facts**  
+Every memory item is stored as a typed, queryable fact.  
+This enables:
+
+- Fast retrieval  
+- Categorization  
+- Pruning  
+- Cross-agent sharing  
+- Deterministic behavior
+
+### **ANSI‑Intelligence**  
+Memory facts are color‑coded using ANSI escape sequences to provide:
+
+- Instant visual parsing  
+- Category‑based color themes  
+- Cognitive path highlighting  
+- Terminal‑native debugging
+
+### **Cognitive Path Visualization**  
+See exactly which memory facts influenced an agent’s output.  
+This is essential for:
+
+- Debugging  
+- Safety  
+- Explainability  
+- Reproducibility
+
+### **Memory-Debug Panel**  
+A lightweight HTML/JS interface that shows:
+
+- Current memory state  
+- Fact categories  
+- Cognitive paths  
+- Agent interactions  
+- Real‑time updates
+
+---
 
 ![Homepage](img/homescreen.png)
 ![Agent Chat](img/code-assistant.png)
 ![Memory Management](img/memory-debug.png)
 
-### Both pip and python are required to be installed first
+---
 
-#### Enter you GitHub Repo Folder
-cd ~/AI-Memory-Layer
+## 📁 Repository Structure (Public Skeleton)
 
-#### [Create venv]
-python3 -m venv venv
+.
+├── backend
+│   ├── api_assistant.py
+│   ├── api_jobs.py
+│   ├── api_memory.py
+│   ├── api_models_live.py
+│   ├── api_models.py
+│   ├── api.py
+│   ├── api_state.py
+│   ├── canonical_model.py
+│   ├── compiler_engine.py
+│   ├── compiler_interface.py
+│   ├── config.py
+│   ├── drift_engine.py
+│   ├── __init__.py
+│   ├── jobs_core.py
+│   ├── memory_settings.py
+│   ├── memory_store.py
+│   ├── memory_summarizer.py
+│   ├── server.py
+│   ├── state_loader.py
+│   ├── state.py
+│   └── validate_server.py
+├── compiler
+│   ├── compile.py
+│   ├── dashboard_server.py
+│   ├── dashboard_static.py
+│   ├── __init__.py
+│   ├── output
+│   │   └── state.json
+│   ├── run.sh
+│   ├── spec.yaml
+│   └── validate.py
+├── compiler_engine.py
+├── data
+│   └── example_profiles.json
+├── img
+│   ├── code-assistant.png
+│   ├── homescreen.png
+│   └── memory-debug.png
+├── LICENSE
+├── load.sh
+├── pytest.ini
+├── README.md
+├── requirements.txt
+├── ROADMAP.md
+├── save.sh
+├── SECURITY.md
+├── state.json
+├── test.py
+├── ui
+│   ├── code-assistant.html
+│   ├── css
+│   │   ├── neon.css
+│   │   ├── neon.css.bak
+│   │   └── neon.css.bak_tables
+│   ├── index.html
+│   ├── js
+│   │   ├── api.js
+│   │   ├── buttons.js
+│   │   ├── code_assistant.js
+│   │   ├── diff.js
+│   │   ├── jobs.js
+│   │   ├── jsonviewer.js
+│   │   ├── main.js
+│   │   ├── memory-debug.js
+│   │   ├── memory_debug.js
+│   │   ├── memory.js
+│   │   ├── modal.js
+│   │   └── status.js
+│   ├── memory-debug.html
+│   ├── statusColors.js
+│   └── styles.css
+└── worker_agents
+    ├── README.md
+    ├── worker_agents
+    │   ├── agent_server.py
+    │   ├── workerV2mock.py
+    │   ├── workerV3mock.py
+    │   └── workerV5mock.py
+    └── worker_agents_original
+        ├── agent_server.py
+        ├── workerV2.py
+        ├── workerV3.py
+        └── workerV5.py
 
-#### [Activate venv]
-source venv/bin/activate
+The private implementation lives in a separate branch and is not included here.
 
-#### [install requirements]
-pip install -r requirements.txt
+---
 
-#### [run server]
-python3 -m backend.server
+## 🚧 Current Status  
+The **private build is underway** and includes:
 
-### Once the server is running it will display your IP address, web management interface is by default using port 8000. 
+- Full memory engine  
+- Fact categorization  
+- ANSI-intelligence renderer  
+- Cognitive path tracer  
+- Memory-debug.html integration  
+- Control-plane hooks for multi-agent systems  
+- Compiler integration for agent workflows  
+- and much much more feature to come
 
-#### EXAMPLE - So to access Web Chat interface, the following URL would be "IPADDRESS:PORT" or "IPADDRESS:PORT/code-assistant.html" or "IPADDRESS:PORT/memory-debug.html" would be used. Ensure it matches up with client that is running the agent python script as well as running ollama and has models downloaded, or Web Chat will remain unpopulated. 
+---
 
-### Then connect a worker agent, ensure both agent_server and worker script are running on the machine with ollama installed. Also ensure an AI model is pulled with ollama, if everything is connected properly all downloaded AI models for ollama will appear in Code Assistant Model list. 
-
-### Acknowledgments
-<p> This project was created by Brendan Davis.
-Development was supported through iterative collaboration with Microsoft Copilot (Leah), used as an AI assistant for architectural guidance, code scaffolding, and documentation refinement. </p>
-
-<p> License updated from GNU GPL to Apache 2.0 on July 9, 2026.
-This change reflects the project's purpose as a portfolio demonstration rather than a production system. </p> 
+1) See the full project roadmap here: [ROADMAP](ROADMAP.md)
+2) Learn more about how the worker agents were built: [Worker Agents](worker_agents/README.md)
+3) Repo Considerations - [Secuirty](SECURITY.md)
