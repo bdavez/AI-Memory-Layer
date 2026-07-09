@@ -1,0 +1,12 @@
+{
+  "profiles": [
+    {
+      "id": "example-user",
+      "facts": [
+        "User prefers dark mode.",
+        "User enjoys learning new technologies.",
+        "User has a background in software development."
+      ]
+    }
+  ]
+}

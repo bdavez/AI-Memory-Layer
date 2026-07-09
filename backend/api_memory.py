@@ -1,54 +1,94 @@
 # backend/api_memory.py
+# Safe Public Release Version — Mock Memory Layer Only
 
 import time
 import importlib
-
 from flask import Blueprint, request, jsonify
 
-from .memory_store import memory_store
-from .memory_settings import load_settings, save_settings
-from . import memory_summarizer
+# ---------------------------------------------------------
+# Public Release Mode (no disk writes, no real memory)
+# ---------------------------------------------------------
+PUBLIC_RELEASE = True
+
+MOCK_MEMORY_DUMP = {
+    "events": {},
+    "facts": {
+        "example-user": [
+            {"fact": "Example fact: system running in public release mode."},
+            {"fact": "Example fact: no real user data is stored."}
+        ]
+    },
+    "meta": {
+        "example-user": {
+            "last_prompt": "(none)",
+            "last_output": "(none)",
+            "last_summary_ts": None
+        }
+    },
+    "settings": {
+        "public_release": True,
+        "debounce_seconds": 2,
+        "min_events_for_summary": 1,
+        "max_events_per_user": 50,
+        "max_facts_per_user": 50,
+        "enable_auto_summarize": False,
+        "enable_manual_summarize": False,
+        "domain_keywords": [],
+        "summarizer_model": "mock"
+    }
+}
 
 bp = Blueprint("memory", __name__, url_prefix="/api/memory")
 
 
 # ---------------------------------------------------------
-# Add Event (auto summarization: debounced + batched)
+# Helpers
+# ---------------------------------------------------------
+def ensure_user(user_id):
+    MOCK_MEMORY_DUMP["facts"].setdefault(user_id, [])
+    MOCK_MEMORY_DUMP["events"].setdefault(user_id, [])
+    MOCK_MEMORY_DUMP["meta"].setdefault(user_id, {
+        "last_prompt": "(none)",
+        "last_output": "(none)",
+        "last_summary_ts": None
+    })
+
+
+# ---------------------------------------------------------
+# Add Event (mock)
 # ---------------------------------------------------------
 @bp.route("/events", methods=["POST"])
 def add_event():
-    try:
-        data = request.get_json(force=True) or {}
+    if not PUBLIC_RELEASE:
+        return jsonify({"error": "Public release mode only"}), 400
 
-        user_id = data.get("user_id")
-        session_id = data.get("session_id")
-        role = data.get("role")
-        content = data.get("content")
-        metadata = data.get("metadata") or {}
+    data = request.get_json(force=True) or {}
 
-        if not user_id or not session_id or not role or content is None:
-            return jsonify({"error": "user_id, session_id, role, content required"}), 400
+    user_id = data.get("user_id")
+    session_id = data.get("session_id")
+    role = data.get("role")
+    content = data.get("content")
 
-        evt = memory_store.add_event(
-            user_id=user_id,
-            session_id=session_id,
-            role=role,
-            content=content,
-            metadata=metadata,
-        )
+    if not user_id or not session_id or not role or content is None:
+        return jsonify({"error": "user_id, session_id, role, content required"}), 400
 
-        # Auto summarization (debounced + batched)
-        importlib.reload(memory_summarizer)
-        memory_summarizer.run_memory_summarizer(user_id, force=False)
+    ensure_user(user_id)
 
-        return jsonify(evt), 200
+    evt = {
+        "user_id": user_id,
+        "session_id": session_id,
+        "role": role,
+        "content": content,
+        "ts": time.time()
+    }
 
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
+    MOCK_MEMORY_DUMP["events"][user_id].append(evt)
+
+    return jsonify(evt), 200
 
 
 # ---------------------------------------------------------
-# GET: Raw Events (multi-user)
+# GET: Raw Events
 # ---------------------------------------------------------
 @bp.route("/events", methods=["GET"])
 def list_events():
@@ -56,8 +96,8 @@ def list_events():
     if not user_id:
         return jsonify({"error": "user_id required"}), 400
 
-    events = memory_store.get_recent_events(user_id, limit=999999)
-    return jsonify({"events": events}), 200
+    ensure_user(user_id)
+    return jsonify({"events": MOCK_MEMORY_DUMP["events"].get(user_id, [])}), 200
 
 
 # ---------------------------------------------------------
@@ -65,22 +105,24 @@ def list_events():
 # ---------------------------------------------------------
 @bp.route("/facts", methods=["GET"])
 def list_facts():
-    """
-    If user_id is provided, return only that user's facts.
-    Otherwise return all facts.
-    """
     user_id = request.args.get("user_id")
 
     if user_id:
-        return jsonify({"facts": memory_store.get_facts(user_id)}), 200
+        ensure_user(user_id)
+        return jsonify({"facts": MOCK_MEMORY_DUMP["facts"].get(user_id, [])}), 200
 
-    return jsonify({"facts": memory_store.list_facts()}), 200
+    return jsonify({"facts": MOCK_MEMORY_DUMP["facts"]}), 200
 
 
 @bp.route("/facts/<user_id>/<int:index>", methods=["DELETE"])
 def delete_fact(user_id, index):
-    memory_store.delete_fact(user_id, index)
-    return jsonify({"status": "ok"}), 200
+    ensure_user(user_id)
+
+    try:
+        MOCK_MEMORY_DUMP["facts"][user_id].pop(index)
+        return jsonify({"status": "ok"}), 200
+    except Exception:
+        return jsonify({"error": "index out of range"}), 400
 
 
 @bp.route("/facts/<user_id>/<int:index>/edit", methods=["POST"])
@@ -91,104 +133,52 @@ def edit_fact(user_id, index):
     if not new_text:
         return jsonify({"error": "fact text required"}), 400
 
-    facts = memory_store.get_facts(user_id)
+    ensure_user(user_id)
+    facts = MOCK_MEMORY_DUMP["facts"][user_id]
+
     if index < 0 or index >= len(facts):
         return jsonify({"error": "index out of range"}), 400
 
     facts[index]["fact"] = new_text.strip()
-    memory_store._save()
 
     return jsonify({"status": "ok"}), 200
 
 
 @bp.route("/facts/<user_id>", methods=["GET"])
 def get_facts_for_user(user_id):
-    try:
-        facts = memory_store.get_facts(user_id)
-        return jsonify({"user_id": user_id, "facts": facts}), 200
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
+    ensure_user(user_id)
+    return jsonify({"user_id": user_id, "facts": MOCK_MEMORY_DUMP["facts"].get(user_id, [])}), 200
 
 
 # ---------------------------------------------------------
-# Settings
+# Settings (mock)
 # ---------------------------------------------------------
 @bp.route("/settings", methods=["GET"])
 def get_memory_settings():
-    return jsonify(load_settings()), 200
+    return jsonify(MOCK_MEMORY_DUMP["settings"]), 200
 
 
 @bp.route("/settings", methods=["POST"])
 def update_memory_settings():
     data = request.get_json(force=True) or {}
-    settings = load_settings()
 
-    for key in [
-        "debounce_seconds",
-        "min_events_for_summary",
-        "max_events_per_user",
-        "max_facts_per_user",
-        "enable_auto_summarize",
-        "enable_manual_summarize",
-        "domain_keywords",
-        "summarizer_model",
-    ]:
-        if key in data:
-            settings[key] = data[key]
+    for key, value in data.items():
+        MOCK_MEMORY_DUMP["settings"][key] = value
 
-    save_settings(settings)
-    return jsonify(settings), 200
+    return jsonify(MOCK_MEMORY_DUMP["settings"]), 200
 
 
 # ---------------------------------------------------------
-# Manual Summarizer Trigger
+# Summarizer (disabled)
 # ---------------------------------------------------------
 @bp.route("/summarize", methods=["POST"])
 def summarize_memory():
-    data = request.get_json(force=True) or {}
-    user_id = data.get("user_id")
-    force = request.args.get("force", "false").lower() == "true"
-
-    if not user_id:
-        return jsonify({"error": "user_id required"}), 400
-
-    importlib.reload(memory_summarizer)
-
-    job = memory_summarizer.run_memory_summarizer(user_id, force=force)
-
-    if job is None:
-        return jsonify({"error": "no events to summarize"}), 400
-
-    return jsonify({"job_id": job["id"]}), 202
+    return jsonify({"error": "Summarizer disabled in public release mode"}), 400
 
 
-# ---------------------------------------------------------
-# Worker Callback: Ingest Summarizer Output
-# ---------------------------------------------------------
 @bp.route("/ingest", methods=["POST"])
 def ingest_summary():
-    data = request.get_json(force=True) or {}
-    raw_text = data.get("text")
-
-    if raw_text is None:
-        return jsonify({"error": "text required"}), 400
-
-    user_id = data.get("user_id", "b")
-
-    importlib.reload(memory_summarizer)
-    facts = memory_summarizer.ingest_summarizer_output(raw_text)
-
-    for f in facts:
-        memory_store.add_fact(user_id, f)
-
-    memory_store.update_meta(
-        user_id,
-        last_summary_ts=time.time(),
-        last_event_index=len(memory_store.get_recent_events(user_id, limit=999999)),
-        last_output=raw_text,
-    )
-
-    return jsonify({"added_facts": facts}), 201
+    return jsonify({"error": "Summarizer disabled in public release mode"}), 400
 
 
 # ---------------------------------------------------------
@@ -200,8 +190,8 @@ def debug_last_prompt():
     if not user_id:
         return jsonify({"error": "user_id required"}), 400
 
-    meta = memory_store.get_meta(user_id)
-    return jsonify({"user_id": user_id, "prompt": meta.get("last_prompt", "(none)")}), 200
+    ensure_user(user_id)
+    return jsonify({"user_id": user_id, "prompt": MOCK_MEMORY_DUMP["meta"][user_id]["last_prompt"]}), 200
 
 
 # ---------------------------------------------------------
@@ -213,24 +203,17 @@ def debug_last_output():
     if not user_id:
         return jsonify({"error": "user_id required"}), 400
 
-    meta = memory_store.get_meta(user_id)
-    return jsonify({"user_id": user_id, "output": meta.get("last_output", "(none)")}), 200
+    ensure_user(user_id)
+    return jsonify({"user_id": user_id, "output": MOCK_MEMORY_DUMP["meta"][user_id]["last_output"]}), 200
 
 
 # ---------------------------------------------------------
-# Dump full memory.json
+# Dump full memory.json (mock)
 # ---------------------------------------------------------
 @bp.route("/dump", methods=["GET"])
 def dump_memory():
-    try:
-        data = {
-            "events": memory_store._events,
-            "facts": memory_store._facts,
-            "meta": memory_store._meta,
-        }
-        return jsonify(data), 200
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
+    return jsonify(MOCK_MEMORY_DUMP), 200
+
 
 # ---------------------------------------------------------
 # Create Memory User
@@ -243,9 +226,6 @@ def create_user():
     if not user_id:
         return jsonify({"error": "user_id required"}), 400
 
-    # Initialize empty meta + facts
-    memory_store.get_meta(user_id)
-    memory_store._facts.setdefault(user_id, [])
-    memory_store._save()
+    ensure_user(user_id)
 
     return jsonify({"status": "ok", "user_id": user_id}), 201
