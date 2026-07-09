@@ -1,4 +1,4 @@
-# AI MEMORY LAYER
+# AI MEMORY LAYER FOR A CONTROL PLANE
 
 Written in python, then extended out to JavaScript with Flask for a Web Managment Interface. 
 
