@@ -78,100 +78,6 @@ A lightweight HTML/JS interface that shows:
 ![Agent Chat](img/code-assistant.png)
 ![Memory Management](img/memory-debug.png)
 
----
-
-## 📁 Repository Structure (Public Skeleton)
-
-.
-├── backend
-│   ├── api_assistant.py
-│   ├── api_jobs.py
-│   ├── api_memory.py
-│   ├── api_models_live.py
-│   ├── api_models.py
-│   ├── api.py
-│   ├── api_state.py
-│   ├── canonical_model.py
-│   ├── compiler_engine.py
-│   ├── compiler_interface.py
-│   ├── config.py
-│   ├── drift_engine.py
-│   ├── __init__.py
-│   ├── jobs_core.py
-│   ├── memory_settings.py
-│   ├── memory_store.py
-│   ├── memory_summarizer.py
-│   ├── server.py
-│   ├── state_loader.py
-│   ├── state.py
-│   └── validate_server.py
-├── compiler
-│   ├── compile.py
-│   ├── dashboard_server.py
-│   ├── dashboard_static.py
-│   ├── __init__.py
-│   ├── output
-│   │   └── state.json
-│   ├── run.sh
-│   ├── spec.yaml
-│   └── validate.py
-├── compiler_engine.py
-├── data
-│   └── example_profiles.json
-├── img
-│   ├── code-assistant.png
-│   ├── homescreen.png
-│   └── memory-debug.png
-├── LICENSE
-├── load.sh
-├── pytest.ini
-├── README.md
-├── requirements.txt
-├── ROADMAP.md
-├── save.sh
-├── SECURITY.md
-├── state.json
-├── test.py
-├── ui
-│   ├── code-assistant.html
-│   ├── css
-│   │   ├── neon.css
-│   │   ├── neon.css.bak
-│   │   └── neon.css.bak_tables
-│   ├── index.html
-│   ├── js
-│   │   ├── api.js
-│   │   ├── buttons.js
-│   │   ├── code_assistant.js
-│   │   ├── diff.js
-│   │   ├── jobs.js
-│   │   ├── jsonviewer.js
-│   │   ├── main.js
-│   │   ├── memory-debug.js
-│   │   ├── memory_debug.js
-│   │   ├── memory.js
-│   │   ├── modal.js
-│   │   └── status.js
-│   ├── memory-debug.html
-│   ├── statusColors.js
-│   └── styles.css
-└── worker_agents
-    ├── README.md
-    ├── worker_agents
-    │   ├── agent_server.py
-    │   ├── workerV2mock.py
-    │   ├── workerV3mock.py
-    │   └── workerV5mock.py
-    └── worker_agents_original
-        ├── agent_server.py
-        ├── workerV2.py
-        ├── workerV3.py
-        └── workerV5.py
-
-The private implementation lives in a separate branch and is not included here.
-
----
-
 ## 🚧 Current Status  
 The **private build is underway** and includes:
 
@@ -183,9 +89,18 @@ The **private build is underway** and includes:
 - Control-plane hooks for multi-agent systems  
 - Compiler integration for agent workflows  
 - and much much more feature to come
+---
+The private implementation lives in a separate branch and is not included here.
 
 ---
 
 1) See the full project roadmap here: [ROADMAP](ROADMAP.md)
 2) Learn more about how the worker agents were built: [Worker Agents](worker_agents/README.md)
 3) Repo Considerations - [Secuirty](SECURITY.md)
+
+### Acknowledgments
+<p> This project was created by Brendan Davis.
+Development was supported through iterative collaboration with Microsoft Copilot (Leah), used as an AI assistant for architectural guidance, code scaffolding, and documentation refinement. </p>
+
+<p> License updated from GNU GPL to Apache 2.0 on July 9, 2026.
+This change reflects the project's purpose as a portfolio demonstration rather than a production system. </p> 
