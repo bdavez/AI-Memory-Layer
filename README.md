@@ -1,3 +1,7 @@
+# AI Memory Layer — Public Release Mode
+A distributed AI memory system with worker agents, distilled prompts, heartbeat tracking,
+and a web-based control plane. This is a safe, sandboxed demonstration of the architecture.
+
 # DISCLAIMER
 This project is a prototype and demonstration of architectural concepts.
 It is not a production system and should not be used as one.
