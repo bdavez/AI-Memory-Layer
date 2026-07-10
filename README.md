@@ -88,7 +88,7 @@ The **private build is underway** and includes:
 - Memory-debug.html integration  
 - Control-plane hooks for multi-agent systems  
 - Compiler integration for agent workflows  
-- and much much more feature to come
+- and many more features to come
 ---
 The private implementation lives in a separate branch and is not included here.
 
