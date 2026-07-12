@@ -44,7 +44,7 @@ function setOutput(text) {
 // Refresh ANSI Inspector
 // ---------------------------------------------------------
 async function refreshAnsiInspector() {
-  const res = await fetch("http://192.168.50.67:9000/ansi-log");
+  const res = await fetch("/ansi-log");
   const data = await res.json();
 
   const out = $("ansi-inspector-output");
