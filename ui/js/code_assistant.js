@@ -22,6 +22,8 @@ term.open(document.getElementById('terminal'));
 // ---------------------------------------------------------
 const $ = (id) => document.getElementById(id);
 
+const preserveTerminalSel = $("preserve-terminal");
+
 const caOutput = $("ca-output");
 const outputModeSel = $("output-mode");
 
@@ -37,6 +39,34 @@ function setStatus(msg) {
 function setOutput(text) {
   $("ca-output").textContent = text;
 }
+
+// ---------------------------------------------------------
+// Refresh ANSI Inspector
+// ---------------------------------------------------------
+async function refreshAnsiInspector() {
+    const res = await fetch("/ansi-log");
+    const data = await res.json();
+
+    const out = $("ansi-inspector-output");
+    out.innerHTML = "";
+
+    for (const line of data.log) {
+      const safe = line
+          .replace(/\x1b
+
+      \[([0-9;]+)m/g, (match) => {
+              return `<span style="color:#7df9ff;">${match}</span>`;
+          })
+          .replace(/\x1b
+
+      \[[0-9;?]*[A-Za-z]/g, (match) => {
+              return `<span style="color:#f0f;">${match}</span>`;
+          });
+
+        out.innerHTML += safe + "<br>";
+    }
+}
+
 
 // ---------------------------------------------------------
 // Load Users (shared with Memory Debug Panel)
@@ -80,13 +110,13 @@ async function runAssistant() {
 
   setStatus("Running…");
   // Auto-clear behavior
-  if (autoClearSel.value === "on") {
-      caOutput.textContent = "";
-      term.clear(); // terminal clears only if auto-clear is ON
-  } else {
-      caOutput.textContent = ""; // chatbox always clears
-      // terminal keeps running log
-  }
+if (autoClearSel.value === "on" && preserveTerminalSel.value === "off") {
+    caOutput.textContent = "";
+    term.clear();
+} else {
+    caOutput.textContent = "";
+}
+
 
   // Clear instruction box after sending
   $("ca-prompt").value = "";
@@ -227,35 +257,58 @@ async function init() {
   const firstUser = await loadUsers();
   if (firstUser) $("ca-user").value = firstUser;
 
+  setInterval(refreshAnsiInspector, 2000);
+
   // Load Terminal Option
   outputModeSel.addEventListener("change", () => {
-      const mode = outputModeSel.value;
+    const mode = outputModeSel.value;
 
-      if (mode === "chat") {
-          caOutput.style.display = "block";
-          $("terminal").style.display = "none";
+    if (mode === "chat") {
+        caOutput.style.display = "block";
+        $("terminal").style.display = "none";
 
-          // Hide auto-clear when chatbox mode is selected
-          $("auto-clear-wrapper").style.display = "none";
+        $("preserve-terminal-wrapper").style.display = "none";
+        $("auto-clear-wrapper").style.display = "none";
 
-      } else {
-          caOutput.style.display = "none";
-          $("terminal").style.display = "block";
+    } else {
+        caOutput.style.display = "none";
+        $("terminal").style.display = "block";
 
-          // Show auto-clear only in terminal mode
-          $("auto-clear-wrapper").style.display = "block";
-      }
-  });
+        $("preserve-terminal-wrapper").style.display = "block";
+        $("auto-clear-wrapper").style.display = "block";
+    }
+});
+
+
 
 
 
   // Wire buttons
   $("ca-run").onclick = runAssistant;
   $("ca-clear").onclick = clearOutput;
+  $("reset-all").onclick = () => {
+      caOutput.textContent = "";
+      term.clear();
+      $("ca-prompt").value = "";
+      setStatus("All cleared.");
+  };
   $("clear-terminal").onclick = () => {
       term.clear();
       setStatus("Terminal cleared.");
   };
+  $("replay-ansi").onclick = async () => {
+    const res = await fetch("/ansi-log");
+    const data = await res.json();
+
+    term.clear();
+
+    for (const line of data.log) {
+        term.write(line);
+    }
+
+    setStatus("Replayed ANSI log.");
+};
+
 
   setStatus("Ready.");
 }

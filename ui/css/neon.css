@@ -1338,3 +1338,7 @@ body {
 #auto-clear-wrapper {
   display: none;
 }
+
+#preserve-terminal-wrapper {
+  display: none;
+}
