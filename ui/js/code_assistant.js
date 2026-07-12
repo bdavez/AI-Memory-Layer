@@ -40,6 +40,15 @@ function setOutput(text) {
   caOutput.textContent = text;
 }
 
+function showSpinner() {
+    $("ca-spinner").style.display = "inline-block";
+}
+
+function hideSpinner() {
+    $("ca-spinner").style.display = "none";
+}
+
+
 // ---------------------------------------------------------
 // Refresh ANSI Inspector
 // ---------------------------------------------------------
@@ -97,7 +106,9 @@ async function runAssistant() {
     return;
   }
 
-  setStatus("Running…");
+  setStatus("Running…"); 
+  showSpinner();
+
 
   // Auto-clear behavior
   if (autoClearSel.value === "on" && preserveTerminalSel.value === "off") {
@@ -140,12 +151,14 @@ async function runAssistant() {
   evtSource.addEventListener("done", () => {
     // console.log("SSE done event");
     setStatus("Done.");
+    hideSpinner();
     evtSource.close();
   });
 
   evtSource.onerror = (e) => {
     // console.error("SSE error:", e);
     setStatus("Error.");
+    hideSpinner();
     evtSource.close();
   };
 }
@@ -158,6 +171,7 @@ function clearOutput() {
   term.clear();
   $("ca-prompt").value = "";
   setStatus("Cleared.");
+  hideSpinner();
 }
 
 // ---------------------------------------------------------

@@ -1342,3 +1342,22 @@ body {
 #preserve-terminal-wrapper {
   display: none;
 }
+
+/* ------------------------------
+   Loader
+------------------------------ */
+
+.spinner {
+    width: 24px;
+    height: 24px;
+    border: 3px solid #444;
+    border-top-color: #00eaff;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin-left: 10px;
+    display: inline-block;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
