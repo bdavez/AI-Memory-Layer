@@ -293,6 +293,12 @@ async function init() {
     setStatus("Replayed ANSI log.");
   };
 
+  $("reset-ansi-log").onclick = async () => {
+    await fetch("/ansi-log/reset", { method: "POST" });
+    setStatus("ANSI log reset.");
+    refreshAnsiInspector();
+  };
+
   setStatus("Ready.");
 }
 

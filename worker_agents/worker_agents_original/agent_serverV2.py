@@ -40,4 +40,11 @@ def run_job(job_id):
 def get_ansi_log():
     return {"log": ansi_log}
 
+@app.post("/ansi-log/reset")
+def reset_worker_ansi():
+    global ansi_log
+    ansi_log = []
+    return {"status": "cleared"}
+
+
 app.run(host="0.0.0.0", port=9000)

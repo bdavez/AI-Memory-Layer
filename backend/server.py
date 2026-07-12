@@ -265,6 +265,19 @@ def serve_static(path):
     return send_from_directory(ui_path, path)
 
 # ---------------------------------------------------------
+# ansi-log reset
+# ---------------------------------------------------------
+@app.post("/ansi-log/reset")
+def reset_ansi_log():
+    import requests
+    try:
+        url = "http://{WORKER_IP}:{WORKER_PORT}/ansi-log/ansi-log/reset"
+        r = requests.post(url, timeout=2)
+        return jsonify({"status": "reset"}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+# ---------------------------------------------------------
 # Entrypoint
 # ---------------------------------------------------------
 if __name__ == "__main__":
