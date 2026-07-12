@@ -74,7 +74,6 @@ The **private build is underway** and includes:
 
 - Full memory engine  
 - Fact categorization  
-- ANSI-intelligence renderer  
 - Cognitive path tracer  
 - Memory-debug.html integration  
 - Control-plane hooks for multi-agent systems  
