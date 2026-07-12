@@ -25,6 +25,12 @@ function collapseSection(section) {
 // ---------------------------------------------------------
 // API Endpoints (Memory Debug Extensions)
 // ---------------------------------------------------------
+async function refreshAnsiLog() {
+    const res = await fetch("/ansi-log");
+    const data = await res.json();
+    document.getElementById("ansi-log-output").textContent =
+        data.log.join("");
+}
 
 async function apiListUsers() {
   const dump = await getJSON("/api/memory/dump");
