@@ -22,6 +22,9 @@ term.open(document.getElementById('terminal'));
 // ---------------------------------------------------------
 const $ = (id) => document.getElementById(id);
 
+const caOutput = $("ca-output");
+const outputModeSel = $("output-mode");
+
 function setStatus(msg) {
   $("ca-status").textContent = msg;
 }
@@ -86,11 +89,19 @@ async function runAssistant() {
   const evtSource = new EventSource(`/api/jobs/assistant/run?model=${model}&prompt=${encodeURIComponent(prompt)}`);
 
   evtSource.onmessage = (e) => {
-    console.log("SSE message:", e.data + "\r\n");
-    term.write(e.data + "\r\n");
-    $("ca-output").textContent += e.data + "\n";
-    
+      const chunk = e.data + "\n";
+      const mode = outputModeSel.value;
+
+      console.log("SSE message:", chunk);
+
+      if (mode === "terminal") {
+          term.write(chunk);            // RAW ANSI
+      } else {
+          caOutput.textContent += chunk; // STRIPPED TEXT
+          caOutput.scrollTop = caOutput.scrollHeight;
+      }
   };
+
 
   evtSource.addEventListener("done", () => {
      console.log("SSE done event");
@@ -111,10 +122,12 @@ async function runAssistant() {
 // Clear Output
 // ---------------------------------------------------------
 function clearOutput() {
-  $("ca-output").textContent = "";
+  caOutput.textContent = "";
+  term.clear();
   $("ca-prompt").value = "";
   setStatus("Cleared.");
 }
+
 // ---------------------------------------------------------
 // Refresh Model Dropdown
 // ---------------------------------------------------------
@@ -153,6 +166,20 @@ async function init() {
   // Load users
   const firstUser = await loadUsers();
   if (firstUser) $("ca-user").value = firstUser;
+
+  // Load Terminal Option
+  outputModeSel.addEventListener("change", () => {
+    const mode = outputModeSel.value;
+
+    if (mode === "chat") {
+        caOutput.style.display = "block";
+        $("terminal").style.display = "none";
+    } else {
+        caOutput.style.display = "none";
+        $("terminal").style.display = "block";
+    }
+});
+
 
   // Wire buttons
   $("ca-run").onclick = runAssistant;
