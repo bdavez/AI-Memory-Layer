@@ -252,6 +252,10 @@ async function init() {
   // Wire buttons
   $("ca-run").onclick = runAssistant;
   $("ca-clear").onclick = clearOutput;
+  $("clear-terminal").onclick = () => {
+      term.clear();
+      setStatus("Terminal cleared.");
+  };
 
   setStatus("Ready.");
 }
