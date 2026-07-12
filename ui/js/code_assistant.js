@@ -280,7 +280,7 @@ async function init() {
     setStatus("Terminal cleared.");
   };
 
-  $("http://192.168.50.67:9000/replay-ansi").onclick = async () => {
+  $("/replay-ansi").onclick = async () => {
     const res = await fetch("/ansi-log");
     const data = await res.json();
 
