@@ -1,5 +1,5 @@
 # **AI‑Memory‑Layer**  
-*A practical, modular, ANSI‑intelligent memory architecture for LLM agents and AI systems.*
+*A practical, modular, memory architecture for LLM agents and AI systems.*
 
 ---
 
@@ -10,7 +10,6 @@ Modern LLMs are powerful — but they’re **stateless**. They forget everything
 This project introduces:
 
 - **Structured durable memory** for agents  
-- **ANSI‑intelligence** for terminal‑native visualization  
 - **Cognitive path tracing** to show *why* an AI made a decision  
 - **Memory-debug.html** for real‑time introspection  
 - **A modular architecture** designed to plug into any LLM workflow  
@@ -45,14 +44,6 @@ This enables:
 - Pruning  
 - Cross-agent sharing  
 - Deterministic behavior
-
-### **ANSI‑Intelligence**  
-Memory facts are color‑coded using ANSI escape sequences to provide:
-
-- Instant visual parsing  
-- Category‑based color themes  
-- Cognitive path highlighting  
-- Terminal‑native debugging
 
 ### **Cognitive Path Visualization**  
 See exactly which memory facts influenced an agent’s output.  
