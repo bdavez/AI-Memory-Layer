@@ -44,7 +44,7 @@ function setOutput(text) {
 // Refresh ANSI Inspector
 // ---------------------------------------------------------
 async function refreshAnsiInspector() {
-  const res = await fetch("http://192.168.50.202:9000/ansi-log");
+  const res = await fetch("http://192.168.50.202:8000/ansi-log");
   const data = await res.json();
 
   const out = $("ansi-inspector-output");
@@ -290,7 +290,7 @@ async function init() {
     setStatus("Terminal cleared.");
   };
 
-  $("http://192.168.50.202:9000/replay-ansi").onclick = async () => {
+  $("http://192.168.50.202:8000/replay-ansi").onclick = async () => {
     const res = await fetch("/ansi-log");
     const data = await res.json();
 
