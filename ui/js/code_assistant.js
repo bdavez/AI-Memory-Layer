@@ -25,6 +25,11 @@ const $ = (id) => document.getElementById(id);
 const caOutput = $("ca-output");
 const outputModeSel = $("output-mode");
 
+const autoClearSel = $("auto-clear");
+const copyBtn = $("copy-output");
+const downloadBtn = $("download-output");
+
+
 function setStatus(msg) {
   $("ca-status").textContent = msg;
 }
@@ -74,7 +79,18 @@ async function runAssistant() {
   }
 
   setStatus("Running…");
-  setOutput("");
+  // Auto-clear behavior
+  if (autoClearSel.value === "on") {
+      caOutput.textContent = "";
+      term.clear(); // terminal clears only if auto-clear is ON
+  } else {
+      caOutput.textContent = ""; // chatbox always clears
+      // terminal keeps running log
+  }
+
+  // Clear instruction box after sending
+  $("ca-prompt").value = "";
+
 
   const params = new URLSearchParams({
     model,
@@ -127,6 +143,25 @@ function clearOutput() {
   $("ca-prompt").value = "";
   setStatus("Cleared.");
 }
+
+copyBtn.onclick = () => {
+    const mode = outputModeSel.value;
+    let text = "";
+
+    if (mode === "chat") {
+        text = caOutput.textContent;
+    } else {
+        // Extract full terminal buffer
+        for (let i = 0; i < term.buffer.active.length; i++) {
+            const line = term.buffer.active.getLine(i);
+            if (line) text += line.translateToString(true) + "\n";
+        }
+    }
+
+    navigator.clipboard.writeText(text);
+    setStatus("Copied output.");
+};
+
 
 // ---------------------------------------------------------
 // Refresh Model Dropdown
