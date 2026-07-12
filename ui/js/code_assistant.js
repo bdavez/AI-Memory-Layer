@@ -51,14 +51,9 @@ async function refreshAnsiInspector() {
     out.innerHTML = "";
 
     for (const line of data.log) {
-      const safe = line.replace(/\x1b\[([0-9;]+)m/g, (match) => {
-              return `<span style="color:#7df9ff;">${match}</span>`;
-          }).replace(/\x1b\[[0-9;?]*[A-Za-z]/g, (match) => {
-              return `<span style="color:#f0f;">${match}</span>`;
-          });
+      const safe = line.replace(/\x1b\[([0-9;]+)m/g, (match) => {return `<span style="color:#7df9ff;">${match}</span>`;}).replace(/\x1b\[[0-9;?]*[A-Za-z]/g, (match) => {return `<span style="color:#f0f;">${match}</span>`;});
 
-
-        out.innerHTML += safe + "<br>";
+      out.innerHTML += safe + "<br>";
     }
 }
 
