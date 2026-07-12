@@ -162,6 +162,31 @@ copyBtn.onclick = () => {
     setStatus("Copied output.");
 };
 
+downloadBtn.onclick = () => {
+    const mode = outputModeSel.value;
+    let text = "";
+
+    if (mode === "chat") {
+        text = caOutput.textContent;
+    } else {
+        for (let i = 0; i < term.buffer.active.length; i++) {
+            const line = term.buffer.active.getLine(i);
+            if (line) text += line.translateToString(true) + "\n";
+        }
+    }
+
+    const blob = new Blob([text], { type: "text/plain" });
+    const url = URL.createObjectURL(blob);
+
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "assistant_output.txt";
+    a.click();
+
+    URL.revokeObjectURL(url);
+    setStatus("Downloaded chat log.");
+};
+
 
 // ---------------------------------------------------------
 // Refresh Model Dropdown
@@ -204,16 +229,24 @@ async function init() {
 
   // Load Terminal Option
   outputModeSel.addEventListener("change", () => {
-    const mode = outputModeSel.value;
+      const mode = outputModeSel.value;
 
-    if (mode === "chat") {
-        caOutput.style.display = "block";
-        $("terminal").style.display = "none";
-    } else {
-        caOutput.style.display = "none";
-        $("terminal").style.display = "block";
-    }
-});
+      if (mode === "chat") {
+          caOutput.style.display = "block";
+          $("terminal").style.display = "none";
+
+          // Hide auto-clear when chatbox mode is selected
+          $("auto-clear-wrapper").style.display = "none";
+
+      } else {
+          caOutput.style.display = "none";
+          $("terminal").style.display = "block";
+
+          // Show auto-clear only in terminal mode
+          $("auto-clear-wrapper").style.display = "block";
+      }
+  });
+
 
 
   // Wire buttons
